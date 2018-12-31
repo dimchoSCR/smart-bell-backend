@@ -8,6 +8,7 @@ import spring.SmartBellBackend;
 import spring.storage.StorageService;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.List;
 
@@ -110,8 +111,13 @@ public class MelodyManager {
         return true;
     }
 
-    // Backend operations
+    /* --- Backend operations --- */
     public void playRingtoneOnButtonClick() {
         smartBellBackend.playOnClick(melodyStorageProps.getRingtoneDirPath() + "/The_Stratosphere_MP3.mp3");
+    }
+
+    @PreDestroy
+    public void onPreDestroy() {
+        smartBellBackend.freeUpResources();
     }
 }
