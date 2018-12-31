@@ -1,4 +1,4 @@
-package smartbell.spring.melody;
+package smartbell.restapi.melody;
 
 public class MelodyInfo {
 }

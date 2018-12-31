@@ -1,9 +1,9 @@
-package smartbell.spring;
+package smartbell.restapi;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import smartbell.spring.melody.MelodyManager;
+import smartbell.restapi.melody.MelodyManager;
 
 @RestController
 @RequestMapping(value = "/melodies")
@@ -14,7 +14,7 @@ public class MelodiesController {
 
     @GetMapping()
     public String hello() {
-        return "Hello spring!";
+        return "Hello restapi!";
     }
 
     @PostMapping("/upload")

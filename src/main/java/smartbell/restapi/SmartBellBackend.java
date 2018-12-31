@@ -1,4 +1,4 @@
-package smartbell.spring;
+package smartbell.restapi;
 
 import smartbell.backend.model.GPIO;
 import smartbell.backend.model.Pin;
