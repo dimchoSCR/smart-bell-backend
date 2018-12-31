@@ -1,9 +1,9 @@
-package spring;
+package smartbell.spring;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import spring.melody.MelodyManager;
+import smartbell.spring.melody.MelodyManager;
 
 @RestController
 @RequestMapping(value = "/melodies")

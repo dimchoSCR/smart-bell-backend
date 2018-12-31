@@ -1,4 +1,4 @@
-package spring.storage;
+package smartbell.spring.storage;
 
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;

@@ -1,12 +1,12 @@
-package spring;
+package smartbell.spring;
 
-import apps.dimcho.model.GPIO;
-import apps.dimcho.model.Pin;
-import apps.dimcho.model.PinManager;
-import apps.dimcho.model.audio.AudioPlayback;
-import apps.dimcho.model.audio.PlaybackMode;
-import apps.dimcho.model.audio.ProcessAudioPlayback;
-import apps.dimcho.model.kernelinterface.KernelInterfacePinManager;
+import smartbell.backend.model.GPIO;
+import smartbell.backend.model.Pin;
+import smartbell.backend.model.PinManager;
+import smartbell.backend.model.audio.AudioPlayback;
+import smartbell.backend.model.audio.PlaybackMode;
+import smartbell.backend.model.audio.ProcessAudioPlayback;
+import smartbell.backend.model.kernelinterface.KernelInterfacePinManager;
 import org.springframework.stereotype.Component;
 
 @Component

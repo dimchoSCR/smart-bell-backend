@@ -1,4 +1,4 @@
-package spring;
+package smartbell.spring;
 
 import javax.xml.ws.WebServiceException;
 

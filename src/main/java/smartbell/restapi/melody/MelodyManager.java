@@ -1,11 +1,11 @@
-package spring.melody;
+package smartbell.spring.melody;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
-import spring.BellServiceException;
-import spring.SmartBellBackend;
-import spring.storage.StorageService;
+import smartbell.spring.BellServiceException;
+import smartbell.spring.storage.StorageService;
+import smartbell.spring.SmartBellBackend;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
