@@ -24,7 +24,7 @@ public class MelodiesController {
     }
 
     @PutMapping("/update/ringtone")
-    public String setRingtone(@RequestParam("name") String melodyName) {
+    public String setRingtone(@RequestBody String melodyName) {
         return melodyManager.setAsRingtone(melodyName);
     }
 }
