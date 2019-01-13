@@ -10,6 +10,7 @@ import smartbell.restapi.SmartBellBackend;
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 
 @Component
@@ -70,16 +71,38 @@ public class MelodyManager {
     }
 
     public String setAsRingtone(String melodyName) {
+        // Checks if this ringtone is already set
+        if(isCurrentRingtone(melodyName)) {
+            return "This ringtone has already been set";
+        }
+
+        MelodyInfo melodyInfo = null;
+        boolean uninkWasSuccessful = false;
         try {
-            // Checks if this ringtone is already set
-            if(isCurrentRingtone(melodyName)) {
-                return "This ringtone has already been set";
+            melodyInfo = getRingtoneInfo();
+            // Unlink old ringtone if it exists
+            if(melodyInfo != null) {
+                String oldRingtonePath = resolvePathToRingtone(melodyInfo.getMelodyName());
+                storageService.unlink(oldRingtonePath);
+                uninkWasSuccessful = true;
             }
 
             storageService.link(resolvePathToMelody(melodyName), melodyStorageProps.getRingtoneDirPath());
 
             return "Ringtone set successfully";
-        } catch (IOException e) {
+        } catch (Exception e) {
+            // Reset old ringtone if appropriate
+            if(melodyInfo != null && uninkWasSuccessful) {
+                try {
+                    storageService.link(
+                            resolvePathToMelody(melodyInfo.getMelodyName()),
+                            melodyStorageProps.getRingtoneDirPath()
+                    );
+                } catch (IOException innerE) {
+                    throw new BellServiceException("Could not reset old ringtone!", e);
+                }
+            }
+
             throw new BellServiceException("Could not set file as ringtone!", e);
         }
     }
@@ -89,7 +112,16 @@ public class MelodyManager {
     }
 
     public MelodyInfo getRingtoneInfo() {
-       return null;
+        try {
+            Path ringtonePath = storageService.listOnly(melodyStorageProps.getRingtoneDirPath());
+            if(ringtonePath == null) {
+                return null;
+            }
+
+            return new MelodyInfo(ringtonePath.getFileName().toString(), 0, "n/a", true);
+        } catch (Exception e) {
+            throw new BellServiceException("Could not get ringtone info!", e);
+        }
     }
 
     public List<MelodyInfo> listMelodies() {
@@ -100,6 +132,13 @@ public class MelodyManager {
         return storageService.constructPathStringUsing(
                 melodyStorageProps.getMelodyStorageDirPath(),
                 melodyName
+        );
+    }
+
+    public String resolvePathToRingtone(String ringtoneName) {
+        return storageService.constructPathStringUsing(
+                melodyStorageProps.getRingtoneDirPath(),
+                ringtoneName
         );
     }
 
