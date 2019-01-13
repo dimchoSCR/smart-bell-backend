@@ -8,7 +8,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Service
 public class FileSystemStorageService implements StorageService {
@@ -48,8 +51,29 @@ public class FileSystemStorageService implements StorageService {
     }
 
     @Override
-    public List<String> listAll(String directory) {
-        return null;
+    public Stream<Path> listAll(String directory) throws IOException{
+        Path dirPath = Paths.get(directory);
+        if (!Files.isDirectory(dirPath)) {
+            throw new FileNotFoundException("The directory you are trying to list does not exists!");
+        }
+
+        return Files.list(dirPath);
+//        return files.map(file -> new FileInfo(file.getFileName().toString()))
+//                .collect(Collectors.toList());
+    }
+
+    @Override
+    public Path listOnly(String directory) throws Exception {
+        List<Path> files = listAll(directory).collect(Collectors.toList());
+        if(files.isEmpty()) {
+            return null;
+        }
+
+        if(files.size() > 1) {
+            throw new Exception("Too many files in directory!");
+        }
+
+        return files.get(0);
     }
 
     @Override
@@ -74,8 +98,17 @@ public class FileSystemStorageService implements StorageService {
     }
 
     @Override
-    public void delete(String filePath) {
+    public void unlink(String linkFilePath) throws IOException {
+        if (!Files.isSymbolicLink(Paths.get(linkFilePath))) {
+            throw new IOException("The file you are trying to unlink is not a link!");
+        }
 
+        delete(linkFilePath);
+    }
+
+    @Override
+    public void delete(String filePath) throws IOException {
+        Files.deleteIfExists(Paths.get(filePath));
     }
 
     @Override
