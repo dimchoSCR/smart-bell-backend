@@ -3,9 +3,7 @@ package smartbell.backend.model.kernelinterface;
 import smartbell.backend.util.kernelinterface.KernelInterfaceFileIO;
 import smartbell.backend.util.PinAttributes;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.io.*;
 
 class KernelInterfacePinExporter {
     private final FileWriter exportFileWriter;
@@ -22,9 +20,36 @@ class KernelInterfacePinExporter {
         ).exists();
     }
 
-     void export(String pinNumber) throws IOException {
+    private static class UdevPermissionTriger {
+
+        private static final String UDEVADM_COMMAND = "udevadm";
+        private static final String SETTLE_OPTION = "settle";
+        private static final ProcessBuilder processBuilder = new ProcessBuilder(UDEVADM_COMMAND, SETTLE_OPTION);
+
+        public static void updateKernelFilePermissionImmediately() throws IOException, InterruptedException {
+            Process process = processBuilder.start();
+            int exitCode = process.waitFor();
+
+            if(exitCode != 0) {
+                try(InputStreamReader ir = new InputStreamReader(process.getErrorStream());
+                    BufferedReader err = new BufferedReader(ir)) {
+
+                    // TODO log
+                    err.lines().forEach(System.err::println);
+                }
+            }
+        }
+
+    }
+
+     void export(String pinNumber) throws IOException, InterruptedException {
         if(!isExported(pinNumber)) {
             KernelInterfaceFileIO.writeWith(exportFileWriter, pinNumber);
+            // This is required in order for the backend to run without superuser permission
+            // The "udevadm settle" command is executed in order to guarantee that
+            // the proper permissions are applied to the kernel interface files
+            // before the backend attempts to write in them.
+            UdevPermissionTriger.updateKernelFilePermissionImmediately();
         }
     }
 
