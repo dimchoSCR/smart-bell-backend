@@ -8,7 +8,6 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.*;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -18,8 +17,18 @@ public class FileSystemStorageService implements StorageService {
     private static final String SYM_LINK_PREFIX = "LinkTo:";
 
     @Override
-    public String constructPathStringUsing(String dir, String... more) {
-        return Paths.get(dir, more).toString();
+    public String constructPathStringUsing(String dir, String... more) throws IOException {
+        Path filePath = Paths.get(dir, more);
+
+        if(!Files.exists(filePath)) {
+            throw new FileNotFoundException("The path strings you provided do not denote an existing file!");
+        }
+
+        if(Files.isDirectory(filePath)) {
+            throw new FileNotFoundException("The path strings you provided denote a directory!");
+        }
+
+        return filePath.toString();
     }
 
     @Override
@@ -74,6 +83,14 @@ public class FileSystemStorageService implements StorageService {
         }
 
         return files.get(0);
+    }
+
+    public String getPathToOnlyFileInDir(String directory) throws Exception {
+        if(listOnly(directory) == null) {
+            return null;
+        }
+
+        return listOnly(directory).toAbsolutePath().toString();
     }
 
     @Override
