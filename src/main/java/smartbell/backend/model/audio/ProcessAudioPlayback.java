@@ -1,20 +1,36 @@
 package smartbell.backend.model.audio;
 
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 
 public class ProcessAudioPlayback implements AudioPlayback {
-    private static final int DEFAULT_PLAYBACK_TIME_SEC = 5;
+    /* ffplay options
+    "-nodisp", "-autoexit",
+            "-loop", "-1",
+            "-loglevel", "quiet"
+     */
+
+    private static final int DEFAULT_PLAYBACK_TIME_SEC = 10;
 
     public static final PlaybackMode DEFAULT_PLAYBACK_MODE = PlaybackMode.MODE_STOP_ON_RELEASE;
     public static final String DEFAULT_AUDIO_PLAYER = "mpg123";
+    public static final String[] DEFAULT_PLAYER_OPTIONS = new String[] {
+          "--loop", "-1"
+    };
 
     private final ProcessBuilder playbackProcessBuilder;
+
     private PlaybackMode mode;
     private Timer timer;
     private Process process;
+    private final String[] options;
 
+    private String audioFilePath;
     private int playbackTimeSec;
+    private boolean optionsBeforeFilePath;
+
+    public ProcessAudioPlayback() {
+        this("");
+    }
 
     public ProcessAudioPlayback(String audioFilePath) {
         this(DEFAULT_AUDIO_PLAYER, audioFilePath);
@@ -29,7 +45,7 @@ public class ProcessAudioPlayback implements AudioPlayback {
     }
 
     public ProcessAudioPlayback(String audioPlayer, String audioFilePath, PlaybackMode mode) {
-        this(audioPlayer, audioFilePath, "", mode);
+        this(audioPlayer, audioFilePath, DEFAULT_PLAYER_OPTIONS, mode);
     }
 
     public ProcessAudioPlayback(String audioPlayer, String audioFilePath, int playbackTimeSec) {
@@ -37,38 +53,74 @@ public class ProcessAudioPlayback implements AudioPlayback {
         this.playbackTimeSec = playbackTimeSec;
     }
 
-    public ProcessAudioPlayback(String audioPlayer, String audioFilePath, String options) {
+    public ProcessAudioPlayback(String audioPlayer, String audioFilePath, String[] options) {
         this(audioPlayer, audioFilePath, options, DEFAULT_PLAYBACK_MODE);
     }
 
-    public ProcessAudioPlayback(String audioPlayer, String audioFilePath, String options, PlaybackMode mode) {
+    public ProcessAudioPlayback(String audioPlayer, String audioFilePath, String[] options, PlaybackMode mode) {
         // TODO redirect streams to log
         this.mode = mode;
+        this.optionsBeforeFilePath = true;
+        this.options = options;
+        this.audioFilePath = audioFilePath;
 
-        playbackProcessBuilder = new ProcessBuilder(audioPlayer, audioFilePath, options).inheritIO();
+        List<String> command = new ArrayList<>();
+        command.add(audioPlayer);
+        command.addAll(Arrays.asList(options));
+        command.add(audioFilePath);
+
+        playbackProcessBuilder = new ProcessBuilder(command).inheritIO();
         playbackTimeSec = DEFAULT_PLAYBACK_TIME_SEC;
     }
 
-//    "/home/pi/The_Stratosphere_MP3.mp3"
+    public boolean isOptionsBeforeFilePath() {
+        return optionsBeforeFilePath;
+    }
+
+    public void setOptionsBeforeFilePath(boolean optionsBeforeFilePath) {
+        if (this.optionsBeforeFilePath != optionsBeforeFilePath) {
+            List<String> command = playbackProcessBuilder.command();
+            if(optionsBeforeFilePath) {
+                // Index 0 - player, Index 1 - audioFilePath
+                int indexOfFilePath = 1;
+                // Remove filepath from list
+                String audioFilePath = command.remove(indexOfFilePath);
+                // Put path ath the back
+                command.add(audioFilePath);
+            } else {
+                int firstIndexOfOption = 1;
+                // Remove filepath from the back of the list
+                String audioFilePath = command.remove(command.size() - 1);
+                // Insert the item at the position after the playercommand
+                command.add(firstIndexOfOption, audioFilePath);
+            }
+        }
+
+        this.optionsBeforeFilePath = optionsBeforeFilePath;
+    }
+
+    //    "/home/pi/The_Stratosphere_MP3.mp3"
 
     @Override
     public void play() throws Exception {
-        if(mode == PlaybackMode.MODE_STOP_ON_RELEASE) {
-            process = playbackProcessBuilder.start();
-        } else if(mode == PlaybackMode.MODE_STOP_AFTER_DELAY) {
-            // Initialize timer lazily
-            if(timer == null) {
-                timer = new Timer();
-            }
-
-            if(!isPlaying()) {
+        if(audioFilePath != null && !audioFilePath.isEmpty()) {
+            if (mode == PlaybackMode.MODE_STOP_ON_RELEASE) {
                 process = playbackProcessBuilder.start();
-                timer.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        process.destroy();
-                    }
-                }, playbackTimeSec * 1000);
+            } else if (mode == PlaybackMode.MODE_STOP_AFTER_DELAY) {
+                // Initialize timer lazily
+                if (timer == null) {
+                    timer = new Timer();
+                }
+
+                if (!isPlaying()) {
+                    process = playbackProcessBuilder.start();
+                    timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            process.destroy();
+                        }
+                    }, playbackTimeSec * 1000);
+                }
             }
         }
     }
@@ -84,6 +136,27 @@ public class ProcessAudioPlayback implements AudioPlayback {
 
         if(isPlaying()) {
             process.destroy();
+            process = null;
+        }
+    }
+
+    public void updateAudio(String newAudioFilePath) throws Exception {
+        boolean shouldRestart = false;
+        if(isPlaying()) {
+            shouldRestart = true;
+        }
+        // Stop current playback if such is in progress
+        stop();
+
+        List<String> command = playbackProcessBuilder.command();
+        int audioFilePathIndex = optionsBeforeFilePath? (command.size() - 1) : 1;
+        command.set(audioFilePathIndex, newAudioFilePath);
+
+        // Update audioFilePath reference
+        this.audioFilePath = newAudioFilePath;
+
+        if (shouldRestart) {
+            play();
         }
     }
 
