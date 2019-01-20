@@ -3,12 +3,16 @@ package smartbell.restapi.melody;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
+import smartbell.backend.model.GPIO;
+import smartbell.backend.model.audio.PlaybackMode;
+import smartbell.restapi.BackendException;
 import smartbell.restapi.BellServiceException;
 import smartbell.restapi.storage.StorageService;
 import smartbell.restapi.SmartBellBackend;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
@@ -22,6 +26,26 @@ public class MelodyManager {
     private StorageService storageService;
     @Autowired
     private SmartBellBackend smartBellBackend;
+
+    @PostConstruct
+    private void init() {
+        try {
+
+            // Creates the melody directory for storing multiple ringtones if not created
+            storageService.createDirectory(melodyStorageProps.getMelodyStorageDirPath());
+            // Creates the "set" ringtone directory if not created
+            storageService.createDirectory(melodyStorageProps.getRingtoneDirPath());
+
+            initBellBackEnd();
+        } catch (IOException e) {
+            throw new BellServiceException("IO error. Could not create melody directories!", e);
+        } catch (BackendException e) {
+            throw new BellServiceException("Initialization error. Could not initialize backend! " +
+                    "Check if the program has permission to read/write files in base directory", e);
+        } catch (Exception e) {
+            throw new BellServiceException("Unknown error during backend initialization!", e);
+        }
+    }
 
     private void validateMusicFile(MultipartFile musicFile) {
         if(musicFile.isEmpty()) {
@@ -42,21 +66,25 @@ public class MelodyManager {
         }
     }
 
-    @PostConstruct
-    private void init() {
-        try {
-            // Creates the melody directory for storing multiple ringtones if not created
-            storageService.createDirectory(melodyStorageProps.getMelodyStorageDirPath());
-            // Creates the "set" ringtone directory if not created
-            storageService.createDirectory(melodyStorageProps.getRingtoneDirPath());
+    private String resolvePathToMelody(String melodyName) throws IOException {
+        return storageService.constructPathStringUsing(
+                melodyStorageProps.getMelodyStorageDirPath(),
+                melodyName
+        );
+    }
 
-            // Listens for raspberryPi button clicks
-            playRingtoneOnButtonClick();
-        } catch (IOException e) {
-            throw new BellServiceException("IO error. Could not create melody directories!", e);
+    private String resolvePathToRingtone(String ringtoneName) throws IOException {
+        return storageService.constructPathStringUsing(
+                melodyStorageProps.getRingtoneDirPath(),
+                ringtoneName
+        );
+    }
+
+    private String getPathToRingtone()  {
+        try {
+            return storageService.getPathToOnlyFileInDir(melodyStorageProps.getRingtoneDirPath());
         } catch (Exception e) {
-            throw new BellServiceException("Initialization error. " +
-                    "Check if the program has permission to read/write files in base directory", e);
+            throw new BellServiceException("Could not get path to ringtone", e);
         }
     }
 
@@ -76,34 +104,42 @@ public class MelodyManager {
             return "This ringtone has already been set";
         }
 
-        MelodyInfo melodyInfo = null;
-        boolean uninkWasSuccessful = false;
+        String oldRingtoneFilePath = getPathToRingtone();
+        boolean unlinkWasSuccessful = false;
         try {
-            melodyInfo = getRingtoneInfo();
             // Unlink old ringtone if it exists
-            if(melodyInfo != null) {
-                String oldRingtonePath = resolvePathToRingtone(melodyInfo.getMelodyName());
-                storageService.unlink(oldRingtonePath);
-                uninkWasSuccessful = true;
+            if(oldRingtoneFilePath != null) {
+                storageService.unlink(oldRingtoneFilePath);
+                unlinkWasSuccessful = true;
             }
 
             storageService.link(resolvePathToMelody(melodyName), melodyStorageProps.getRingtoneDirPath());
+            // Set backend player to play the new ringtone
+            smartBellBackend.updatePlayerRingtone(resolvePathToRingtone(melodyName));
 
             return "Ringtone set successfully";
-        } catch (Exception e) {
-            // Reset old ringtone if appropriate
-            if(melodyInfo != null && uninkWasSuccessful) {
+        } catch (IOException e) {
+            // Rollback old ringtone if appropriate
+            if(unlinkWasSuccessful) {
                 try {
-                    storageService.link(
-                            resolvePathToMelody(melodyInfo.getMelodyName()),
-                            melodyStorageProps.getRingtoneDirPath()
+                    String oldMelodyName = oldRingtoneFilePath.substring(
+                            oldRingtoneFilePath.lastIndexOf(File.separatorChar) + 1
                     );
+
+                    storageService.link(resolvePathToMelody(oldMelodyName), melodyStorageProps.getRingtoneDirPath());
                 } catch (IOException innerE) {
-                    throw new BellServiceException("Could not reset old ringtone!", e);
+                    throw new BellServiceException("Setting previous ringtone failed!", innerE);
                 }
+
+                return "Error could not set provided ringtone. Reverted to old one";
             }
 
-            throw new BellServiceException("Could not set file as ringtone!", e);
+            return "Error could not set provided ringtone. Did you upload any?";
+
+        } catch (BackendException e) {
+            throw new BellServiceException("Could not set file as ringtone! ", e);
+        } catch (Exception e) {
+            throw new BellServiceException("Unknown error while setting ringtone", e);
         }
     }
 
@@ -128,20 +164,6 @@ public class MelodyManager {
         return null;
     }
 
-    public String resolvePathToMelody(String melodyName) {
-        return storageService.constructPathStringUsing(
-                melodyStorageProps.getMelodyStorageDirPath(),
-                melodyName
-        );
-    }
-
-    public String resolvePathToRingtone(String ringtoneName) {
-        return storageService.constructPathStringUsing(
-                melodyStorageProps.getRingtoneDirPath(),
-                ringtoneName
-        );
-    }
-
     public boolean isCurrentRingtone(String melodyName) {
         return storageService.isFile(melodyStorageProps.getRingtoneDirPath(), melodyName);
     }
@@ -151,8 +173,17 @@ public class MelodyManager {
     }
 
     /* --- Backend operations --- */
-    public void playRingtoneOnButtonClick() {
-        smartBellBackend.playOnClick(melodyStorageProps.getRingtoneDirPath() + "/The_Stratosphere_MP3.mp3");
+    private void initBellBackEnd() throws BackendException, BellServiceException {
+        String pathToNewRingtone = getPathToRingtone();
+        if(pathToNewRingtone == null) {
+            pathToNewRingtone = ""; // TODO maybe a default ringtone
+        }
+
+        // Set current ringtone to be played
+        smartBellBackend.updatePlayerRingtone(pathToNewRingtone);
+        smartBellBackend.setPlayerMode(PlaybackMode.MODE_STOP_AFTER_DELAY);
+        // Listens for raspberryPi button clicks
+        smartBellBackend.initializeBellButtonListener(GPIO.PIN_2, 100);
     }
 
     @PreDestroy
