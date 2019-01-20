@@ -36,10 +36,10 @@ public class KernelInterfaceFileIO {
 
         try {
             return new FileWriter(kernelInterfaceFile);
-        } catch (IOException e) {
+        } catch (Exception e) {
             // FileWriter() throws an IOException if the specified gpio file does not exist
             // Check for the gpio files is performed above
-            throw new IllegalStateException("Unknown GPIO Kernel interface state!");
+            throw new IllegalStateException("Unknown GPIO Kernel interface state!", e);
         }
     }
 
