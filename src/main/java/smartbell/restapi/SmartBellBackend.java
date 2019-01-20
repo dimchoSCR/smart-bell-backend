@@ -3,7 +3,6 @@ package smartbell.restapi;
 import smartbell.backend.model.GPIO;
 import smartbell.backend.model.Pin;
 import smartbell.backend.model.PinManager;
-import smartbell.backend.model.audio.AudioPlayback;
 import smartbell.backend.model.audio.PlaybackMode;
 import smartbell.backend.model.audio.ProcessAudioPlayback;
 import smartbell.backend.model.kernelinterface.KernelInterfacePinManager;
@@ -12,31 +11,30 @@ import org.springframework.stereotype.Component;
 @Component
 public class SmartBellBackend {
     private final PinManager pinManager;
-    private AudioPlayback player;
+    private final ProcessAudioPlayback player;
 
-    public SmartBellBackend() {
+    private Pin bellButtonPin;
+
+    public SmartBellBackend() throws BackendException {
         try {
             pinManager = new KernelInterfacePinManager();
         } catch (Exception e) {
-            throw new BellServiceException("Error unable to connect to bell kernel interface!", e);
+            throw new BackendException("Error unable to connect to bell kernel interface!", e);
         }
+
+        player = new ProcessAudioPlayback();
     }
 
     @SuppressWarnings("Duplicates")
-    public void playOnClick(String ringtonePath) {
-
-        if(player != null) {
-            throw new BellServiceException("Backend player already playing!");
-        }
-
-        player = new ProcessAudioPlayback(ringtonePath, 10);
+    public void initializeBellButtonListener(GPIO buttonPinNumber, int debounce) throws BackendException {
         try {
             // Export the pin responsible for the bell's button
-            Pin pin2 = pinManager.exportPin(GPIO.PIN_2);
+            bellButtonPin = pinManager.exportPin(buttonPinNumber);
             // Enable button debounce
-            pin2.setDebounce(100);
+            bellButtonPin.setDebounce(debounce);
+
             // Listen for button clicks
-            pin2.setOnValueChangedListener((value) -> {
+            bellButtonPin.setOnValueChangedListener((value) -> {
                 try {
                     if (value == 1) {
                         player.play();
@@ -53,16 +51,27 @@ public class SmartBellBackend {
             player.stop();
             pinManager.resetPins();
 
-            throw new BellServiceException("The audio playback failed!" , e);
+            throw new BackendException("The audio playback failed!" , e);
         }
+    }
 
+    public void updatePlayerRingtone(String pathToNewRingtone) throws BackendException {
+        try {
+            player.updateAudio(pathToNewRingtone);
+        } catch (Exception e) {
+            player.stop();
+            pinManager.resetPins();
+
+            throw new BackendException("Changing audio file failed!", e);
+        }
+    }
+
+    public void setPlayerMode(PlaybackMode playbackMode) {
+        player.setPlaybackMode(playbackMode);
     }
 
     public void freeUpResources() {
-        if(player != null) {
-            player.stop();
-        }
-
+        player.stop();
         pinManager.resetPins();
     }
 }
