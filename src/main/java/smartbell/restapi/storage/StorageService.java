@@ -18,6 +18,7 @@ public interface StorageService {
     Stream<Path> listAll(String directory) throws IOException;
     Path listOnly(String directory) throws Exception;
     String getPathToOnlyFileInDir(String directory) throws Exception;
+    long getFileSize(String pathToFile) throws IOException;
     void delete(String filePath) throws IOException;
     void deleteAll(String directory);
 }

@@ -94,6 +94,16 @@ public class FileSystemStorageService implements StorageService {
     }
 
     @Override
+    public long getFileSize(String pathToFile) throws IOException {
+        Path filePath = Paths.get(pathToFile);
+        if(!Files.exists(filePath)) {
+            throw new FileNotFoundException("No such file!");
+        }
+
+        return Files.size(filePath);
+    }
+
+    @Override
     public Resource getAsResource(String filePath) {
         return null;
     }
