@@ -37,6 +37,7 @@ public class MelodyManager {
             storageService.createDirectory(melodyStorageProps.getRingtoneDirPath());
 
             initBellBackEnd();
+            getRingtoneInfo();
         } catch (IOException e) {
             throw new BellServiceException("IO error. Could not create melody directories!", e);
         } catch (BackendException e) {
@@ -154,7 +155,8 @@ public class MelodyManager {
                 return null;
             }
 
-            return new MelodyInfo(ringtonePath.getFileName().toString(), 0, "n/a", true);
+            String ringtoneFilePath = ringtonePath.toAbsolutePath().toString();
+            return new MelodyInfo(ringtonePath.getFileName().toString(), storageService.getFileSize(ringtoneFilePath), "n/a", true);
         } catch (Exception e) {
             throw new BellServiceException("Could not get ringtone info!", e);
         }
