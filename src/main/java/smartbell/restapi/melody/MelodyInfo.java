@@ -1,12 +1,12 @@
 package smartbell.restapi.melody;
 
+import smartbell.restapi.utils.AudioUtils;
 import smartbell.restapi.utils.FileSizeUtil;
 
 public class MelodyInfo {
 
     private String melodyName;
     private String fileSize;
-    // TODO duration
     private String duration;
 
     private boolean isRingtone;
@@ -14,7 +14,7 @@ public class MelodyInfo {
     public MelodyInfo(String melodyName, long fileSize, String duration, boolean isRingtone) {
         this.melodyName = melodyName;
         this.fileSize = FileSizeUtil.toHumanReadableSize(fileSize);
-        this.duration = duration;
+        this.duration = AudioUtils.toHumanReadableDuration(duration);
         this.isRingtone = isRingtone;
     }
 

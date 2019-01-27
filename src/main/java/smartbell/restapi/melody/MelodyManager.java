@@ -1,5 +1,9 @@
 package smartbell.restapi.melody;
 
+import jdk.internal.org.xml.sax.SAXException;
+import org.apache.tika.exception.TikaException;
+import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.XMPDM;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,6 +29,8 @@ public class MelodyManager {
     @Autowired
     private StorageService storageService;
     @Autowired
+    private AudioMetadataExtractor audioMetadataExtractor;
+    @Autowired
     private SmartBellBackend smartBellBackend;
 
     @PostConstruct
@@ -37,7 +43,6 @@ public class MelodyManager {
             storageService.createDirectory(melodyStorageProps.getRingtoneDirPath());
 
             initBellBackEnd();
-            getRingtoneInfo();
         } catch (IOException e) {
             throw new BellServiceException("IO error. Could not create melody directories!", e);
         } catch (BackendException e) {
@@ -155,8 +160,17 @@ public class MelodyManager {
                 return null;
             }
 
+            String ringtoneName = ringtonePath.getFileName().toString();
             String ringtoneFilePath = ringtonePath.toAbsolutePath().toString();
-            return new MelodyInfo(ringtonePath.getFileName().toString(), storageService.getFileSize(ringtoneFilePath), "n/a", true);
+
+            Metadata ringtoneMetadata = audioMetadataExtractor.parseAudioFileMetadata(ringtoneFilePath);
+            String ringtoneDuration = ringtoneMetadata.get(XMPDM.DURATION);
+
+            long ringtoneFileSize = storageService.getFileSize(ringtoneFilePath);
+
+            return new MelodyInfo(ringtoneName, ringtoneFileSize, ringtoneDuration, true);
+        } catch (TikaException | SAXException | IOException e){
+          throw new BellServiceException("Could not extract ringtone metadata!", e);
         } catch (Exception e) {
             throw new BellServiceException("Could not get ringtone info!", e);
         }
