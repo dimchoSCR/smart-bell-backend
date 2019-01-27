@@ -3,18 +3,20 @@ package smartbell.backend.model.audio;
 import java.util.*;
 
 public class ProcessAudioPlayback implements AudioPlayback {
-    /* ffplay options
-    "-nodisp", "-autoexit",
-            "-loop", "-1",
-            "-loglevel", "quiet"
+    /* mpg123 options
+    "--loop", "-1"
      */
 
     private static final int DEFAULT_PLAYBACK_TIME_SEC = 10;
 
     public static final PlaybackMode DEFAULT_PLAYBACK_MODE = PlaybackMode.MODE_STOP_ON_RELEASE;
-    public static final String DEFAULT_AUDIO_PLAYER = "mpg123";
+    public static final String DEFAULT_AUDIO_PLAYER = "cvlc";
     public static final String[] DEFAULT_PLAYER_OPTIONS = new String[] {
-          "--loop", "-1"
+            "-I", "dummy",
+            "-A",  "alsa",
+            "--loop", "--play-and-exit",
+            "--no-auto-preparse",
+            "--no-interact"
     };
 
     private final ProcessBuilder playbackProcessBuilder;
