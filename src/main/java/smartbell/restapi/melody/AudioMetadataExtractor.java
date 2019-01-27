@@ -1,10 +1,9 @@
 package smartbell.restapi.melody;
 
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.XMPDM;
+import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
-import org.apache.tika.parser.Parser;
 import org.apache.tika.parser.audio.AudioParser;
 import org.apache.tika.parser.audio.MidiParser;
 import org.apache.tika.parser.mp3.Mp3Parser;
@@ -15,10 +14,12 @@ import org.gagravarr.tika.VorbisParser;
 import org.springframework.stereotype.Component;
 
 import java.io.FileInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 
 @Component
 public class AudioMetadataExtractor {
+    public static final String AUDIO_BASE_CONTENT_TYPE = "audio";
 
     private final AutoDetectParser parser = new AutoDetectParser(
             new AudioParser(),
@@ -45,5 +46,9 @@ public class AudioMetadataExtractor {
             return metadata;
         }
 
+    }
+
+    public MediaType detectContentType(InputStream audioInputStream) throws IOException {
+        return parser.getDetector().detect(audioInputStream, new Metadata());
     }
 }

@@ -4,6 +4,7 @@ import jdk.internal.org.xml.sax.SAXException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.metadata.XMPDM;
+import org.apache.tika.mime.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -16,6 +17,7 @@ import smartbell.restapi.SmartBellBackend;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
+import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -59,16 +61,22 @@ public class MelodyManager {
         }
 
         // MIME type checks
-        // TODO refine check Files.probeContentType
-        String contentType = musicFile.getContentType();
-        if(contentType == null) {
-            throw new BellServiceException("No content type provided for file!");
-        }
+        try {
+            // Wrap InputStream in BufferedInputStream to enable mark and reset operations
+            MediaType mediaType = audioMetadataExtractor.detectContentType(
+                    new BufferedInputStream(musicFile.getInputStream())
+            );
 
-        String contentPrefix = contentType.split("/")[0];
-        System.out.println(contentType);
-        if(!contentPrefix.equalsIgnoreCase("audio")) {
-            throw new BellServiceException("Content type mismatch! Only audio files are permitted.");
+            String mimeType = mediaType.getType();
+            if(mimeType.isEmpty()) {
+                throw new BellServiceException("Could not determine file content type!");
+            }
+
+            if(!mimeType.equalsIgnoreCase(AudioMetadataExtractor.AUDIO_BASE_CONTENT_TYPE)) {
+                throw new BellServiceException("Content type mismatch! Only audio files are permitted.");
+            }
+        } catch (IOException e) {
+            throw new BellServiceException("Could not determine file content type", e);
         }
     }
 
@@ -197,8 +205,10 @@ public class MelodyManager {
 
         // Set current ringtone to be played
         smartBellBackend.updatePlayerRingtone(pathToNewRingtone);
+        // TODO apply player mode from server preference
         smartBellBackend.setPlayerMode(PlaybackMode.MODE_STOP_AFTER_DELAY);
         // Listens for raspberryPi button clicks
+        // TODO apply debounce from server preference
         smartBellBackend.initializeBellButtonListener(GPIO.PIN_2, 100);
     }
 
