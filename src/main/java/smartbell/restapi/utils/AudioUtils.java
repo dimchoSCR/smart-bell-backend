@@ -2,6 +2,8 @@ package smartbell.restapi.utils;
 
 public class AudioUtils {
 
+    public static final String OGG_CONTENT_TYPE= "audio/vorbis";
+
     private static final String[] timeFormatterArray = {"00:", "0", "", ":"};
 
     private static int[] prettifyMilliseconds(long durationMillis) {
@@ -19,23 +21,31 @@ public class AudioUtils {
         return timeFormatterArray[digitLength] + timeDigit;
     }
 
-    public static String toHumanReadableDuration(String xmpDMDuration) {
-        String[] splitDuration = xmpDMDuration.split("\\.");
-        if (splitDuration.length != 2) {
-            throw new IllegalStateException("Malformed duration string! The string must follow the XMP standard.");
+    public static String toHumanReadableDuration(String xmpDMDuration, String contentType) {
+        if(xmpDMDuration == null) {
+            return "Unknown";
         }
 
-        long durationWholePart = Long.parseLong(splitDuration[0]);
-        int[] timeArr = prettifyMilliseconds(durationWholePart);
+        // If no '.' symbol exists the original string is returned
+        String[] splitDuration = xmpDMDuration.split("\\."); // Sample duration string: 32324.2323
+        // For some reason apache tika parses the xmpDMDuration in seconds for ogg and in milliseconds for mp3
+        long durationWholePartMillis;
+        if(contentType.equalsIgnoreCase(OGG_CONTENT_TYPE)) {
+            durationWholePartMillis = Long.parseLong(splitDuration[0]) * 1000;
+        } else {
+            durationWholePartMillis = Long.parseLong(splitDuration[0]);
+        }
+
+        int[] timeArr = prettifyMilliseconds(durationWholePartMillis);
 
         int seconds = timeArr[0];
         int minutes = timeArr[1];
         int hours = timeArr[2];
-        if(durationWholePart < 60000) { // Case seconds
+        if(durationWholePartMillis < 60000) { // Case seconds
             return timeFormatterArray[0] + formatTimeDigit(seconds);
-        } else if (durationWholePart < 3600000L) { // Case minutes and seconds
+        } else if (durationWholePartMillis < 3600000L) { // Case minutes and seconds
            return formatTimeDigit(minutes) + timeFormatterArray[3] + formatTimeDigit(seconds);
-        } else if(durationWholePart < 86400000L){ // Case hours minutes and seconds
+        } else if(durationWholePartMillis < 86400000L){ // Case hours minutes and seconds
             return formatTimeDigit(hours) + timeFormatterArray[3] +
                     formatTimeDigit(minutes) + timeFormatterArray[3] +
                     formatTimeDigit(seconds);

@@ -13,13 +13,19 @@ import org.gagravarr.tika.FlacParser;
 import org.gagravarr.tika.VorbisParser;
 import org.springframework.stereotype.Component;
 
+import javax.sound.sampled.AudioFormat;
+import javax.sound.sampled.AudioInputStream;
+import javax.sound.sampled.AudioSystem;
+import javax.sound.sampled.UnsupportedAudioFileException;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
 @Component
 public class AudioMetadataExtractor {
-    public static final String AUDIO_BASE_CONTENT_TYPE = "audio";
+    static final String AUDIO_BASE_CONTENT_TYPE = "audio";
+    static final String META_CONTENT_TYPE = "Content-Type";
 
     private final AutoDetectParser parser = new AutoDetectParser(
             new AudioParser(),
@@ -32,7 +38,7 @@ public class AudioMetadataExtractor {
 
     private final ParseContext parseCtx = new ParseContext();
 
-    public Metadata parseAudioFileMetadata(String audioFilePath) throws Exception {
+    Metadata parseAudioFileMetadata(String audioFilePath) throws Exception {
 
         try (InputStream stream = new FileInputStream(audioFilePath)) {
             BodyContentHandler handler = new BodyContentHandler();
@@ -48,7 +54,21 @@ public class AudioMetadataExtractor {
 
     }
 
-    public MediaType detectContentType(InputStream audioInputStream) throws IOException {
+    MediaType detectContentType(InputStream audioInputStream) throws IOException {
         return parser.getDetector().detect(audioInputStream, new Metadata());
+    }
+
+    String tryExtractingDurationFromAudioStream(String melodyPath) throws IOException {
+        AudioInputStream audioInputStream = null;
+        try {
+            audioInputStream = AudioSystem.getAudioInputStream(new File(melodyPath));
+        } catch (UnsupportedAudioFileException e) {
+            return null;
+        }
+
+        AudioFormat format = audioInputStream.getFormat();
+        long frames = audioInputStream.getFrameLength();
+
+        return String.valueOf((frames / format.getFrameRate()) * 1000);
     }
 }

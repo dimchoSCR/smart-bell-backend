@@ -8,13 +8,15 @@ public class MelodyInfo {
     private String melodyName;
     private String fileSize;
     private String duration;
+    private String contentType;
 
     private boolean isRingtone;
 
-    public MelodyInfo(String melodyName, long fileSize, String duration, boolean isRingtone) {
+    public MelodyInfo(String melodyName, String contentType, long fileSize, String duration, boolean isRingtone) {
         this.melodyName = melodyName;
+        this.contentType = contentType;
         this.fileSize = FileSizeUtil.toHumanReadableSize(fileSize);
-        this.duration = AudioUtils.toHumanReadableDuration(duration);
+        this.duration = AudioUtils.toHumanReadableDuration(duration, contentType);
         this.isRingtone = isRingtone;
     }
 
@@ -50,4 +52,11 @@ public class MelodyInfo {
         isRingtone = ringtone;
     }
 
+    public String getContentType() {
+        return contentType;
+    }
+
+    public void setContentType(String contentType) {
+        this.contentType = contentType;
+    }
 }

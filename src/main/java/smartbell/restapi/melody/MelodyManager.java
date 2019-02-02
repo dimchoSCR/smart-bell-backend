@@ -12,8 +12,8 @@ import smartbell.backend.model.GPIO;
 import smartbell.backend.model.audio.PlaybackMode;
 import smartbell.restapi.BackendException;
 import smartbell.restapi.BellServiceException;
-import smartbell.restapi.storage.StorageService;
 import smartbell.restapi.SmartBellBackend;
+import smartbell.restapi.storage.StorageService;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -22,6 +22,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 public class MelodyManager {
@@ -102,6 +104,30 @@ public class MelodyManager {
         }
     }
 
+    private MelodyInfo constructMelodyInfoFor(Path melodyPath)  {
+        // TODO duration
+        try {
+            String melodyName = melodyPath.getFileName().toString();
+            String melodyFilePath = melodyPath.toAbsolutePath().toString();
+
+            long melodyFileSize = storageService.getFileSize(melodyFilePath);
+            boolean ringtone = isCurrentRingtone(melodyName);
+            Metadata melodyMetadata = audioMetadataExtractor.parseAudioFileMetadata(melodyFilePath);
+            String melodyDuration = melodyMetadata.get(XMPDM.DURATION);
+            String melodyType = melodyMetadata.get(AudioMetadataExtractor.META_CONTENT_TYPE);
+
+            if (melodyDuration == null) {
+                melodyDuration = audioMetadataExtractor.tryExtractingDurationFromAudioStream(melodyFilePath);
+            }
+
+            return new MelodyInfo(melodyName, melodyType, melodyFileSize, melodyDuration, ringtone);
+        } catch (TikaException | SAXException | IOException e){
+            throw new BellServiceException("Could not get melody info! Extracting metadata failed", e);
+        } catch (Exception e) {
+            throw new BellServiceException("Could not get melody info!", e);
+        }
+    }
+
     public void addToMelodieLibrary(MultipartFile musicFile) throws BellServiceException {
         try {
             validateMusicFile(musicFile);
@@ -162,30 +188,29 @@ public class MelodyManager {
     }
 
     public MelodyInfo getRingtoneInfo() {
+        Path ringtonePath;
         try {
-            Path ringtonePath = storageService.listOnly(melodyStorageProps.getRingtoneDirPath());
+            ringtonePath = storageService.listOnly(melodyStorageProps.getRingtoneDirPath());
             if(ringtonePath == null) {
                 return null;
             }
-
-            String ringtoneName = ringtonePath.getFileName().toString();
-            String ringtoneFilePath = ringtonePath.toAbsolutePath().toString();
-
-            Metadata ringtoneMetadata = audioMetadataExtractor.parseAudioFileMetadata(ringtoneFilePath);
-            String ringtoneDuration = ringtoneMetadata.get(XMPDM.DURATION);
-
-            long ringtoneFileSize = storageService.getFileSize(ringtoneFilePath);
-
-            return new MelodyInfo(ringtoneName, ringtoneFileSize, ringtoneDuration, true);
-        } catch (TikaException | SAXException | IOException e){
-          throw new BellServiceException("Could not extract ringtone metadata!", e);
         } catch (Exception e) {
             throw new BellServiceException("Could not get ringtone info!", e);
         }
+
+        return constructMelodyInfoFor(ringtonePath);
     }
 
     public List<MelodyInfo> listMelodies() {
-        return null;
+        Stream<Path> audioFiles;
+        try {
+            audioFiles = storageService.listAll(melodyStorageProps.getMelodyStorageDirPath());
+        } catch (IOException e) {
+            throw new BellServiceException("Could not list melodies!", e);
+        }
+
+        return audioFiles.map(this::constructMelodyInfoFor)
+                .collect(Collectors.toList());
     }
 
     public boolean isCurrentRingtone(String melodyName) {
