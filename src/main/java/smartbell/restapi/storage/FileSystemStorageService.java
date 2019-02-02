@@ -60,15 +60,13 @@ public class FileSystemStorageService implements StorageService {
     }
 
     @Override
-    public Stream<Path> listAll(String directory) throws IOException{
+    public Stream<Path> listAll(String directory) throws IOException {
         Path dirPath = Paths.get(directory);
         if (!Files.isDirectory(dirPath)) {
             throw new FileNotFoundException("The directory you are trying to list does not exists!");
         }
 
         return Files.list(dirPath);
-//        return files.map(file -> new FileInfo(file.getFileName().toString()))
-//                .collect(Collectors.toList());
     }
 
     @Override
