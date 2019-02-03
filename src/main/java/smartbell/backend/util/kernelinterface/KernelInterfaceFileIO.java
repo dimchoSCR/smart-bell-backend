@@ -63,7 +63,8 @@ public class KernelInterfaceFileIO {
             writer.write(value);
             writer.flush();
         } catch (IOException e) {
-            throw new IOException("Could not write to kernel interface file!", e);
+            throw new IOException("Could not write to kernel interface file! " +
+                    "Did you forget to set the pin as an output pin?", e);
         }
     }
 

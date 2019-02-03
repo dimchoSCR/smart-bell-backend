@@ -1,5 +1,7 @@
 package smartbell.restapi;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import smartbell.backend.model.GPIO;
 import smartbell.backend.model.Pin;
 import smartbell.backend.model.PinManager;
@@ -10,6 +12,8 @@ import org.springframework.stereotype.Component;
 
 @Component
 public class SmartBellBackend {
+    private final Logger log = LoggerFactory.getLogger(SmartBellBackend.class);
+
     private final PinManager pinManager;
     private final ProcessAudioPlayback player;
 
@@ -33,24 +37,33 @@ public class SmartBellBackend {
             // Enable button debounce
             bellButtonPin.setDebounce(debounce);
 
+            // Stop audio output using hardware to prevent noise
+            Pin audioBlockPin = pinManager.provisionPin(GPIO.PIN_27, Pin.Direction.OUT);
+            player.setOnStopListener(() -> {
+                try {
+                    audioBlockPin.setValue(Pin.Value.LOW);
+                } catch (Exception e) {
+                    log.error("Could not set pin to low!", e);
+                }
+            });
+
             // Listen for button clicks
             bellButtonPin.setOnValueChangedListener((value) -> {
                 try {
                     if (value == 1) {
+                        audioBlockPin.setValue(Pin.Value.HIGH);
                         player.play();
                     } else if(player.getPlaybackMode() == PlaybackMode.MODE_STOP_ON_RELEASE) {
                         player.stop();
                     }
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    log.error("Error occurred while listening for button clicks", e);
                     player.stop();
                 }
             });
 
         } catch (Exception e) {
-            player.stop();
-            pinManager.resetPins();
-
+            freeUpResources();
             throw new BackendException("The audio playback failed!" , e);
         }
     }
@@ -59,9 +72,7 @@ public class SmartBellBackend {
         try {
             player.updateAudio(pathToNewRingtone);
         } catch (Exception e) {
-            player.stop();
-            pinManager.resetPins();
-
+            freeUpResources();
             throw new BackendException("Changing audio file failed!", e);
         }
     }
@@ -72,6 +83,7 @@ public class SmartBellBackend {
 
     public void freeUpResources() {
         player.stop();
+        player.removeOnStopListener();
         pinManager.resetPins();
     }
 }

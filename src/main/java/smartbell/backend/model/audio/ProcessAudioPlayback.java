@@ -24,6 +24,7 @@ public class ProcessAudioPlayback implements AudioPlayback {
     private PlaybackMode mode;
     private Timer timer;
     private Process process;
+    private Runnable onStop;
     private final String[] options;
 
     private String audioFilePath;
@@ -65,6 +66,7 @@ public class ProcessAudioPlayback implements AudioPlayback {
         this.optionsBeforeFilePath = true;
         this.options = options;
         this.audioFilePath = audioFilePath;
+        this.onStop = () -> {};
 
         List<String> command = new ArrayList<>();
         command.add(audioPlayer);
@@ -119,7 +121,7 @@ public class ProcessAudioPlayback implements AudioPlayback {
                     timer.schedule(new TimerTask() {
                         @Override
                         public void run() {
-                            process.destroy();
+                            stop();
                         }
                     }, playbackTimeSec * 1000);
                 }
@@ -140,6 +142,18 @@ public class ProcessAudioPlayback implements AudioPlayback {
             process.destroy();
             process = null;
         }
+
+        onStop.run();
+    }
+
+    @Override
+    public void setOnStopListener(Runnable onStop) {
+        this.onStop = onStop;
+    }
+
+    @Override
+    public void removeOnStopListener() {
+        this.onStop = () -> {};
     }
 
     public void updateAudio(String newAudioFilePath) throws Exception {
