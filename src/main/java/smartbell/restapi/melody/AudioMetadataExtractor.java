@@ -1,6 +1,7 @@
 package smartbell.restapi.melody;
 
 import org.apache.tika.metadata.Metadata;
+import org.apache.tika.metadata.XMPDM;
 import org.apache.tika.mime.MediaType;
 import org.apache.tika.parser.AutoDetectParser;
 import org.apache.tika.parser.ParseContext;
@@ -26,6 +27,7 @@ import java.io.InputStream;
 public class AudioMetadataExtractor {
     static final String AUDIO_BASE_CONTENT_TYPE = "audio";
     static final String META_CONTENT_TYPE = "Content-Type";
+    static final String OGG_CONTENT_TYPE = "audio/vorbis";
 
     private final AutoDetectParser parser = new AutoDetectParser(
             new AudioParser(),
@@ -37,6 +39,20 @@ public class AudioMetadataExtractor {
     );
 
     private final ParseContext parseCtx = new ParseContext();
+
+    private String tryExtractingDurationUsingAudioStream(String melodyPath) throws IOException {
+        AudioInputStream audioInputStream = null;
+        try {
+            audioInputStream = AudioSystem.getAudioInputStream(new File(melodyPath));
+        } catch (UnsupportedAudioFileException e) {
+            return null;
+        }
+
+        AudioFormat format = audioInputStream.getFormat();
+        long frames = audioInputStream.getFrameLength();
+
+        return String.valueOf((frames / format.getFrameRate()) * 1000);
+    }
 
     Metadata parseAudioFileMetadata(String audioFilePath) throws Exception {
 
@@ -58,17 +74,19 @@ public class AudioMetadataExtractor {
         return parser.getDetector().detect(audioInputStream, new Metadata());
     }
 
-    String tryExtractingDurationFromAudioStream(String melodyPath) throws IOException {
-        AudioInputStream audioInputStream = null;
-        try {
-            audioInputStream = AudioSystem.getAudioInputStream(new File(melodyPath));
-        } catch (UnsupportedAudioFileException e) {
-            return null;
+    String tryExtractingDuration(Metadata melodyMetadata, String melodyPath) throws IOException {
+        String duration = melodyMetadata.get(XMPDM.DURATION);
+        if(duration != null) {
+            String audioContentType = melodyMetadata.get(AudioMetadataExtractor.META_CONTENT_TYPE);
+            // For some reason apache tika parses the xmpDMDuration in seconds for ogg and in milliseconds for mp3
+            if(audioContentType.equalsIgnoreCase(OGG_CONTENT_TYPE)) {
+                double durationMillis = Double.parseDouble(duration) * 1000;
+                return String.valueOf(durationMillis);
+            }
+
+            return duration;
         }
 
-        AudioFormat format = audioInputStream.getFormat();
-        long frames = audioInputStream.getFrameLength();
-
-        return String.valueOf((frames / format.getFrameRate()) * 1000);
+        return tryExtractingDurationUsingAudioStream(melodyPath);
     }
 }

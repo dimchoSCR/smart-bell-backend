@@ -113,12 +113,8 @@ public class MelodyManager {
             long melodyFileSize = storageService.getFileSize(melodyFilePath);
             boolean ringtone = isCurrentRingtone(melodyName);
             Metadata melodyMetadata = audioMetadataExtractor.parseAudioFileMetadata(melodyFilePath);
-            String melodyDuration = melodyMetadata.get(XMPDM.DURATION);
+            String melodyDuration = audioMetadataExtractor.tryExtractingDuration(melodyMetadata, melodyFilePath);
             String melodyType = melodyMetadata.get(AudioMetadataExtractor.META_CONTENT_TYPE);
-
-            if (melodyDuration == null) {
-                melodyDuration = audioMetadataExtractor.tryExtractingDurationFromAudioStream(melodyFilePath);
-            }
 
             return new MelodyInfo(melodyName, melodyType, melodyFileSize, melodyDuration, ringtone);
         } catch (TikaException | SAXException | IOException e){
@@ -209,6 +205,7 @@ public class MelodyManager {
             throw new BellServiceException("Could not list melodies!", e);
         }
 
+        // Returns an empty list if no melodies exist
         return audioFiles.map(this::constructMelodyInfoFor)
                 .collect(Collectors.toList());
     }
