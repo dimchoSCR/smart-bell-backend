@@ -1,5 +1,6 @@
 package smartbell.backend.model.audio;
 
+import java.io.File;
 import java.util.*;
 
 public class ProcessAudioPlayback implements AudioPlayback {
@@ -179,6 +180,12 @@ public class ProcessAudioPlayback implements AudioPlayback {
     @Override
     public void setPlaybackMode(PlaybackMode mode) {
         this.mode = mode;
+    }
+
+    @Override
+    public String getCurrentSongName() {
+        int indexOfPathSeparator = audioFilePath.lastIndexOf(File.separatorChar);
+        return audioFilePath.substring(indexOfPathSeparator + 1);
     }
 
     @Override
