@@ -2,6 +2,7 @@ package smartbell.restapi;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import smartbell.backend.model.GPIO;
 import smartbell.backend.model.Pin;
 import smartbell.backend.model.PinManager;
@@ -9,6 +10,7 @@ import smartbell.backend.model.audio.PlaybackMode;
 import smartbell.backend.model.audio.ProcessAudioPlayback;
 import smartbell.backend.model.kernelinterface.KernelInterfacePinManager;
 import org.springframework.stereotype.Component;
+import smartbell.restapi.db.SmartBellRepository;
 
 @Component
 public class SmartBellBackend {
@@ -18,6 +20,9 @@ public class SmartBellBackend {
     private final ProcessAudioPlayback player;
 
     private Pin bellButtonPin;
+
+    @Autowired
+    private SmartBellRepository bellRepository;
 
     public SmartBellBackend() throws BackendException {
         try {
@@ -50,9 +55,11 @@ public class SmartBellBackend {
             // Listen for button clicks
             bellButtonPin.setOnValueChangedListener((value) -> {
                 try {
-                    if (value == 1) {
-                        audioBlockPin.setValue(Pin.Value.HIGH);
-                        player.play();
+                    String playingMelodyName = player.getCurrentSongName();
+                    if (value == 1 && !playingMelodyName.isEmpty() && !player.isPlaying()) {
+                            audioBlockPin.setValue(Pin.Value.HIGH);
+                            player.play();
+                            bellRepository.addToRingLog(playingMelodyName);
                     } else if(player.getPlaybackMode() == PlaybackMode.MODE_STOP_ON_RELEASE) {
                         player.stop();
                     }
