@@ -8,6 +8,12 @@ public class RingEntry {
     private String melodyName;
     private LocalDateTime dateTime;
 
+    public RingEntry(long id, String melodyName, LocalDateTime dateTime) {
+        this.id = id;
+        this.melodyName = melodyName;
+        this.dateTime = dateTime;
+    }
+
     public long getId() {
         return id;
     }
