@@ -23,6 +23,8 @@ public class SmartBellBackend {
 
     @Autowired
     private SmartBellRepository bellRepository;
+    @Autowired
+    private FirebaseNotificationService notificationService;
 
     public SmartBellBackend() throws BackendException {
         try {
@@ -60,6 +62,7 @@ public class SmartBellBackend {
                             audioBlockPin.setValue(Pin.Value.HIGH);
                             player.play();
                             bellRepository.addToRingLog(playingMelodyName);
+                            notificationService.sendPushNotification();
                     } else if(player.getPlaybackMode() == PlaybackMode.MODE_STOP_ON_RELEASE) {
                         player.stop();
                     }
