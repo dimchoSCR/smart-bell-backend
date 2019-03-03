@@ -3,7 +3,6 @@ package smartbell.restapi.melody;
 import jdk.internal.org.xml.sax.SAXException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
-import org.apache.tika.metadata.XMPDM;
 import org.apache.tika.mime.MediaType;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -231,7 +230,7 @@ public class MelodyManager {
         smartBellBackend.setPlayerMode(PlaybackMode.MODE_STOP_AFTER_DELAY);
         // Listens for raspberryPi button clicks
         // TODO apply debounce from server preference
-        smartBellBackend.initializeBellButtonListener(GPIO.PIN_2, 100);
+        smartBellBackend.initializeBellButtonListener(GPIO.PIN_0, 100);
     }
 
     @PreDestroy
