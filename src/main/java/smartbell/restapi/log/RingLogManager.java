@@ -2,7 +2,7 @@ package smartbell.restapi.log;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import smartbell.restapi.BellServiceException;
+import smartbell.restapi.exceptions.BellServiceException;
 import smartbell.restapi.db.ComparisonSigns;
 import smartbell.restapi.db.SmartBellRepository;
 import smartbell.restapi.db.entities.RingEntry;

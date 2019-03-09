@@ -1,6 +1,6 @@
 package smartbell.restapi.db;
 
-import smartbell.restapi.BellServiceException;
+import smartbell.restapi.exceptions.BellServiceException;
 
 public enum ComparisonSigns {
     EQUALS("="), GREATER_THAN(">"),

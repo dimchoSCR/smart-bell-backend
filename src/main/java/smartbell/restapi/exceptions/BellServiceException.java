@@ -1,4 +1,4 @@
-package smartbell.restapi;
+package smartbell.restapi.exceptions;
 
 import javax.xml.ws.WebServiceException;
 

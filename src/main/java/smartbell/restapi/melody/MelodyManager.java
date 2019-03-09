@@ -9,8 +9,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 import smartbell.backend.model.GPIO;
 import smartbell.backend.model.audio.PlaybackMode;
-import smartbell.restapi.BackendException;
-import smartbell.restapi.BellServiceException;
+import smartbell.restapi.exceptions.BackendException;
+import smartbell.restapi.exceptions.BellServiceException;
 import smartbell.restapi.SmartBellBackend;
 import smartbell.restapi.storage.StorageService;
 

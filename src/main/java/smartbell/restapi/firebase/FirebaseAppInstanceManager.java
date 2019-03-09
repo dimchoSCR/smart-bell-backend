@@ -2,7 +2,7 @@ package smartbell.restapi.firebase;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import smartbell.restapi.BellServiceException;
+import smartbell.restapi.exceptions.BellServiceException;
 import smartbell.restapi.db.SmartBellRepository;
 
 import java.util.List;

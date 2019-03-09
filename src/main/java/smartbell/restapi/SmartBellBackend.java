@@ -10,6 +10,7 @@ import smartbell.backend.model.audio.PlaybackMode;
 import smartbell.backend.model.audio.ProcessAudioPlayback;
 import smartbell.backend.model.kernelinterface.KernelInterfacePinManager;
 import org.springframework.stereotype.Component;
+import smartbell.restapi.exceptions.BackendException;
 import smartbell.restapi.firebase.FirebaseNotificationService;
 import smartbell.restapi.log.RingLogManager;
 
@@ -21,6 +22,7 @@ public class SmartBellBackend {
     private final ProcessAudioPlayback player;
 
     private Pin bellButtonPin;
+    private Pin audioBlockPin;
 
     @Autowired
     private RingLogManager ringLogManager;
@@ -30,6 +32,8 @@ public class SmartBellBackend {
     public SmartBellBackend() throws BackendException {
         try {
             pinManager = new KernelInterfacePinManager();
+            // Stop audio output using hardware to prevent noise
+            audioBlockPin = pinManager.provisionPin(GPIO.PIN_27, Pin.Direction.OUT);
         } catch (Exception e) {
             throw new BackendException("Error unable to connect to bell kernel interface!", e);
         }
@@ -45,8 +49,6 @@ public class SmartBellBackend {
             // Enable button debounce
             bellButtonPin.setDebounce(debounce);
 
-            // Stop audio output using hardware to prevent noise
-            Pin audioBlockPin = pinManager.provisionPin(GPIO.PIN_27, Pin.Direction.OUT);
             player.setOnStopListener(() -> {
                 try {
                     audioBlockPin.setValue(Pin.Value.LOW);
@@ -64,7 +66,7 @@ public class SmartBellBackend {
                             player.play();
                             ringLogManager.addToRingLogAsync(playingMelodyName);
                             notificationService.sendPushNotificationAsync();
-                    } else if(player.getPlaybackMode() == PlaybackMode.MODE_STOP_ON_RELEASE) {
+                    } else if (player.getPlaybackMode() == PlaybackMode.MODE_STOP_ON_RELEASE) {
                         player.stop();
                     }
                 } catch (Exception e) {
@@ -90,6 +92,22 @@ public class SmartBellBackend {
 
     public void setPlayerMode(PlaybackMode playbackMode) {
         player.setPlaybackMode(playbackMode);
+    }
+
+    public void muteAudio() throws BackendException {
+        try {
+            audioBlockPin.setValue(Pin.Value.HIGH);
+        } catch (Exception e) {
+            throw new BackendException("Could not mute audio", e);
+        }
+    }
+
+    public void unmuteAudio() throws BackendException {
+        try {
+            audioBlockPin.setValue(Pin.Value.LOW);
+        } catch (Exception e) {
+            throw new BackendException("Could not unmute audio", e);
+        }
     }
 
     public void freeUpResources() {

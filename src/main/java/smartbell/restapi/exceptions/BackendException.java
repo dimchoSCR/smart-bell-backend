@@ -1,4 +1,4 @@
-package smartbell.restapi;
+package smartbell.restapi.exceptions;
 
 public class BackendException extends Exception{
     public BackendException(String message) {
