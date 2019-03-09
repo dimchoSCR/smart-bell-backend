@@ -7,4 +7,8 @@ public class SmartBellDBContract {
         public static final String COLUMN_TIMESTAMP = "created_at";
     }
 
+    public static class AppInstanceColumns {
+        public static final String APP_GUID = "app_guid";
+        public static final String FIREBASE_TOKEN = "firebase_token";
+    }
 }

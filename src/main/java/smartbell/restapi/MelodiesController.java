@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 import smartbell.restapi.db.ComparisonSigns;
 import smartbell.restapi.db.SmartBellRepository;
 import smartbell.restapi.db.entities.RingEntry;
+import smartbell.restapi.log.RingLogManager;
 import smartbell.restapi.melody.MelodyInfo;
 import smartbell.restapi.melody.MelodyManager;
 
@@ -20,7 +21,7 @@ public class MelodiesController {
     @Autowired
     private MelodyManager melodyManager;
     @Autowired
-    private SmartBellRepository bellRepository;
+    private RingLogManager ringLogManager;
 
     @GetMapping
     public List<MelodyInfo> getAllMelodies() {
@@ -31,11 +32,7 @@ public class MelodiesController {
     public List<RingEntry> getFullLog(@QueryParam("compSign") ComparisonSigns compSign,
                                       @QueryParam("timeString") String timeString) {
 
-        if (compSign == null && timeString == null) {
-            return bellRepository.getAllEntries();
-        }
-
-        return bellRepository.getEntriesBasedOn(compSign, timeString);
+       return ringLogManager.getAllRingLogEntries(compSign, timeString);
     }
 
     @PostMapping("/upload")

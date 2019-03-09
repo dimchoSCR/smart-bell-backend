@@ -10,7 +10,8 @@ import smartbell.backend.model.audio.PlaybackMode;
 import smartbell.backend.model.audio.ProcessAudioPlayback;
 import smartbell.backend.model.kernelinterface.KernelInterfacePinManager;
 import org.springframework.stereotype.Component;
-import smartbell.restapi.db.SmartBellRepository;
+import smartbell.restapi.firebase.FirebaseNotificationService;
+import smartbell.restapi.log.RingLogManager;
 
 @Component
 public class SmartBellBackend {
@@ -22,7 +23,7 @@ public class SmartBellBackend {
     private Pin bellButtonPin;
 
     @Autowired
-    private SmartBellRepository bellRepository;
+    private RingLogManager ringLogManager;
     @Autowired
     private FirebaseNotificationService notificationService;
 
@@ -61,8 +62,8 @@ public class SmartBellBackend {
                     if (value == 1 && !playingMelodyName.isEmpty() && !player.isPlaying()) {
                             audioBlockPin.setValue(Pin.Value.HIGH);
                             player.play();
-                            bellRepository.addToRingLog(playingMelodyName);
-                            notificationService.sendPushNotification();
+                            ringLogManager.addToRingLogAsync(playingMelodyName);
+                            notificationService.sendPushNotificationAsync();
                     } else if(player.getPlaybackMode() == PlaybackMode.MODE_STOP_ON_RELEASE) {
                         player.stop();
                     }

@@ -8,3 +8,9 @@ CREATE TABLE IF NOT EXISTS main.RingLog (
     primary key (id)
 );
 
+CREATE TABLE IF NOT EXISTS main.AppInstance (
+  app_guid VARCHAR(255) NOT NULL,
+  firebase_token VARCHAR(255) NOT NULL,
+  constraint main.AppInstance
+    primary key (app_guid)
+);
