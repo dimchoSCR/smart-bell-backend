@@ -55,6 +55,7 @@ public class FirebaseNotificationService {
     }
 
     public void sendPushNotificationAsync() {
+        // TODO do not disturb flag
         notifyExecutor.execute(() -> {
             try {
                 List<String> appInstanceTokens = firebaseClientManager.getAllClientTokens();

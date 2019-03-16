@@ -1,0 +1,21 @@
+package smartbell.restapi.donotdisturb;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+import smartbell.restapi.job.Job;
+
+@Component
+public class StartDoNotDisturbJob extends Job {
+    private final Logger log = LoggerFactory.getLogger(StartDoNotDisturbJob.class);
+
+    @Autowired
+    private DoNotDisturbManager doNotDisturbManager;
+
+    @Override
+    public void doJob() {
+        log.info("Enabling do not disturb!");
+        doNotDisturbManager.enableDoNotDisturbMode();
+    }
+}

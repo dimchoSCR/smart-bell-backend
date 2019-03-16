@@ -7,6 +7,7 @@ import org.springframework.web.multipart.MultipartFile;
 import smartbell.restapi.db.ComparisonSigns;
 import smartbell.restapi.db.SmartBellRepository;
 import smartbell.restapi.db.entities.RingEntry;
+import smartbell.restapi.donotdisturb.DoNotDisturbManager;
 import smartbell.restapi.log.RingLogManager;
 import smartbell.restapi.melody.MelodyInfo;
 import smartbell.restapi.melody.MelodyManager;
@@ -22,6 +23,8 @@ public class MelodiesController {
     private MelodyManager melodyManager;
     @Autowired
     private RingLogManager ringLogManager;
+    @Autowired
+    private DoNotDisturbManager doNotDisturbManager;
 
     @GetMapping
     public List<MelodyInfo> getAllMelodies() {
@@ -44,6 +47,29 @@ public class MelodiesController {
     @PutMapping("/update/ringtone")
     public String setRingtone(@RequestBody String melodyName) {
         return melodyManager.setAsRingtone(melodyName);
+    }
+
+    @GetMapping("/donotdisturb/enable")
+    public String enableDoNotDisturb() {
+        doNotDisturbManager.enableDoNotDisturbMode();
+        return "Success";
+    }
+
+    @PutMapping("/donotdisturb/rules")
+    public String enableDoNotDisturbWithRules(
+            @RequestParam("startTime") String startTime,
+            @RequestParam("endTime") String endTime,
+            @RequestParam boolean endTomorrow
+    ) {
+
+        doNotDisturbManager.scheduleDoNotDisturb(startTime, endTime, endTomorrow);
+        return null;
+    }
+
+    @GetMapping("/donotdisturb/disable")
+    public String disableDoNotDisturb() {
+        doNotDisturbManager.disableDoNotDisturbMode();
+        return "Success";
     }
 
     @InitBinder

@@ -4,6 +4,8 @@ import jdk.internal.org.xml.sax.SAXException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -35,6 +37,8 @@ public class MelodyManager {
     private AudioMetadataExtractor audioMetadataExtractor;
     @Autowired
     private SmartBellBackend smartBellBackend;
+
+    private final Logger log = LoggerFactory.getLogger(MelodyManager.class);
 
     @PostConstruct
     private void init() {

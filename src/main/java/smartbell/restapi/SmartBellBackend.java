@@ -28,6 +28,8 @@ public class SmartBellBackend {
     private RingLogManager ringLogManager;
     @Autowired
     private FirebaseNotificationService notificationService;
+    @Autowired
+    private BellStatus bellStatus;
 
     public SmartBellBackend() throws BackendException {
         try {
@@ -62,10 +64,12 @@ public class SmartBellBackend {
                 try {
                     String playingMelodyName = player.getCurrentSongName();
                     if (value == 1 && !playingMelodyName.isEmpty() && !player.isPlaying()) {
+                        if (!bellStatus.getDoNotDisturbStatus().isInDoNotDisturb()) {
                             audioBlockPin.setValue(Pin.Value.HIGH);
                             player.play();
-                            ringLogManager.addToRingLogAsync(playingMelodyName);
-                            notificationService.sendPushNotificationAsync();
+                        }
+                        ringLogManager.addToRingLogAsync(playingMelodyName);
+                        notificationService.sendPushNotificationAsync();
                     } else if (player.getPlaybackMode() == PlaybackMode.MODE_STOP_ON_RELEASE) {
                         player.stop();
                     }
@@ -92,22 +96,6 @@ public class SmartBellBackend {
 
     public void setPlayerMode(PlaybackMode playbackMode) {
         player.setPlaybackMode(playbackMode);
-    }
-
-    public void muteAudio() throws BackendException {
-        try {
-            audioBlockPin.setValue(Pin.Value.HIGH);
-        } catch (Exception e) {
-            throw new BackendException("Could not mute audio", e);
-        }
-    }
-
-    public void unmuteAudio() throws BackendException {
-        try {
-            audioBlockPin.setValue(Pin.Value.LOW);
-        } catch (Exception e) {
-            throw new BackendException("Could not unmute audio", e);
-        }
     }
 
     public void freeUpResources() {
