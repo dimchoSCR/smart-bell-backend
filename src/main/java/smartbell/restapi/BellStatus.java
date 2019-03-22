@@ -9,8 +9,8 @@ public class BellStatus {
         private boolean inDoNotDisturb;
         private boolean endTomorrow;
 
-        private String startTime;
-        private String endTime;
+        private long startTimeMillis;
+        private long endTimeMillis;
 
 
         public boolean isInDoNotDisturb() {
@@ -29,20 +29,20 @@ public class BellStatus {
             this.endTomorrow = endTomorrow;
         }
 
-        public String getStartTime() {
-            return startTime;
+        public long getStartTimeMillis() {
+            return startTimeMillis;
         }
 
-        public void setStartTime(String startTime) {
-            this.startTime = startTime;
+        public void setStartTimeMillis(long startTimeMillis) {
+            this.startTimeMillis = startTimeMillis;
         }
 
-        public String getEndTime() {
-            return endTime;
+        public long getEndTimeMillis() {
+            return endTimeMillis;
         }
 
-        public void setEndTime(String endTime) {
-            this.endTime = endTime;
+        public void setEndTimeMillis(long endTimeMillis) {
+            this.endTimeMillis = endTimeMillis;
         }
     }
 

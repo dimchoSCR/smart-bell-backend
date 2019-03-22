@@ -33,18 +33,17 @@ public class DoNotDisturbManager {
     @Autowired
     private JobManager jobManager;
 
-    private void updateDoNotDisturbStatus(String startTime, String endTime, boolean endTomorrow) {
+    private void updateDoNotDisturbStatus(long startTimeMillis, long endTimeMillis, boolean endTomorrow) {
         BellStatus.DoNotDisturbStatus doNotDisturbStatus = bellStatus.getDoNotDisturbStatus();
-        doNotDisturbStatus.setStartTime(startTime);
-        doNotDisturbStatus.setEndTime(endTime);
+        doNotDisturbStatus.setStartTimeMillis(startTimeMillis);
+        doNotDisturbStatus.setEndTimeMillis(endTimeMillis);
         doNotDisturbStatus.setEndTomorrow(endTomorrow);
 
         // TODO save to db
     }
 
     private void rescheduleDoNotDisturbStart(LocalDateTime startDateTime) {
-        ZoneId zoneId = ZoneId.of("Europe/Sofia");
-        long initialDelayForJobStart = Duration.between(LocalDateTime.now(zoneId), startDateTime).getSeconds();
+        long initialDelayForJobStart = Duration.between(LocalDateTime.now(), startDateTime).getSeconds();
         log.info("Delay before start: " + initialDelayForJobStart);
 
         jobManager.cancelJobById(ENABLE_DO_NOT_DISTURB_REQUEST_ID, true);
@@ -54,7 +53,7 @@ public class DoNotDisturbManager {
         } else {
             enableDoNotDisturbMode();
             LocalDateTime newStartDateTime = startDateTime.plusDays(1);
-            scheduleDoNotDisturbStartJob(Duration.between(LocalDateTime.now(zoneId), newStartDateTime).getSeconds());
+            scheduleDoNotDisturbStartJob(Duration.between(LocalDateTime.now(), newStartDateTime).getSeconds());
         }
     }
 
@@ -71,8 +70,7 @@ public class DoNotDisturbManager {
     }
 
     private void rescheduleDoNotDisturbEnd(LocalDateTime endDateTime) {
-        ZoneId zoneId = ZoneId.of("Europe/Sofia"); // TODO remove
-        long initialDelayForJobEnd = Duration.between(LocalDateTime.now(zoneId), endDateTime).getSeconds();
+        long initialDelayForJobEnd = Duration.between(LocalDateTime.now(), endDateTime).getSeconds();
         log.info("Delay before end: " + initialDelayForJobEnd);
 
         jobManager.cancelJobById(DISABLE_DO_NOT_DISTURB_REQUEST_ID, true);
@@ -81,7 +79,7 @@ public class DoNotDisturbManager {
         } else {
             disableDoNotDisturbMode();
             LocalDateTime newEndDateTime = endDateTime.plusDays(1);
-            scheduleDoNotDisturbEndJob(Duration.between(LocalDateTime.now(zoneId), newEndDateTime).getSeconds());
+            scheduleDoNotDisturbEndJob(Duration.between(LocalDateTime.now(), newEndDateTime).getSeconds());
         }
     }
 
@@ -104,21 +102,26 @@ public class DoNotDisturbManager {
         bellStatus.getDoNotDisturbStatus().setInDoNotDisturb(false);
     }
 
-    public void scheduleDoNotDisturb(String startTime, String endTime, boolean endTomorrow) {
-        updateDoNotDisturbStatus(startTime, endTime, endTomorrow);
+    public void scheduleDoNotDisturb(long startTimeMillis, long endTimeMillis, boolean endTomorrow) {
+        try {
+            updateDoNotDisturbStatus(startTimeMillis, endTimeMillis, endTomorrow);
 
-        // LocalDateTime.ofInstant(Instant.ofEpochMilli(longValue), ZoneId.systemDefault());
-        // TODO exception handling
-        LocalDate now = LocalDate.now();
-        LocalDateTime startDateTime = LocalTime.parse(startTime).atDate(now);
-        LocalDateTime endDateTime;
-        if (endTomorrow) {
-            endDateTime = LocalTime.parse(endTime).atDate(now.plusDays(1));
-        } else {
-            endDateTime = LocalTime.parse(endTime).atDate(now);
+            LocalDateTime startDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(startTimeMillis), ZoneId.systemDefault());
+            LocalDateTime endDateTime;
+
+            if (endTomorrow) {
+                endDateTime = LocalDateTime.ofInstant(
+                        Instant.ofEpochMilli(endTimeMillis),
+                        ZoneId.systemDefault()
+                ).plusDays(1);
+            } else {
+                endDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTimeMillis), ZoneId.systemDefault());
+            }
+
+            rescheduleDoNotDisturbStart(startDateTime);
+            rescheduleDoNotDisturbEnd(endDateTime);
+        } catch (DateTimeException err) {
+            log.error("Could not parse start and end time millis for do not disturb!", err);
         }
-
-        rescheduleDoNotDisturbStart(startDateTime);
-        rescheduleDoNotDisturbEnd(endDateTime);
     }
 }

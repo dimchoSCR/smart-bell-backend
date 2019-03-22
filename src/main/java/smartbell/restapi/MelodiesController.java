@@ -57,8 +57,8 @@ public class MelodiesController {
 
     @PutMapping("/donotdisturb/rules")
     public String enableDoNotDisturbWithRules(
-            @RequestParam("startTime") String startTime,
-            @RequestParam("endTime") String endTime,
+            @RequestParam("startTime") long startTime,
+            @RequestParam("endTime") long endTime,
             @RequestParam boolean endTomorrow
     ) {
 
