@@ -6,12 +6,29 @@ import org.springframework.stereotype.Component;
 public class BellStatus {
 
     public class DoNotDisturbStatus {
+        private int[] days;
+
         private boolean inDoNotDisturb;
         private boolean endTomorrow;
 
         private long startTimeMillis;
         private long endTimeMillis;
 
+        DoNotDisturbStatus() {
+            days = null;
+            inDoNotDisturb = false;
+            endTomorrow = false;
+            startTimeMillis = -1;
+            endTimeMillis = -1;
+        }
+
+        public int[] getDays() {
+            return days;
+        }
+
+        public void setDays(int[] days) {
+            this.days = days;
+        }
 
         public boolean isInDoNotDisturb() {
             return inDoNotDisturb;

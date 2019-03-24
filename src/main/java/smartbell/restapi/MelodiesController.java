@@ -56,20 +56,25 @@ public class MelodiesController {
     }
 
     @PutMapping("/donotdisturb/rules")
-    public String enableDoNotDisturbWithRules(
+    public void enableDoNotDisturbWithRules(
+            @RequestParam("days") int[] days,
             @RequestParam("startTime") long startTime,
             @RequestParam("endTime") long endTime,
-            @RequestParam boolean endTomorrow
+            @RequestParam("endTomorrow") boolean endTomorrow
     ) {
 
-        doNotDisturbManager.scheduleDoNotDisturb(startTime, endTime, endTomorrow);
-        return null;
+        doNotDisturbManager.scheduleDoNotDisturb(days, startTime, endTime, endTomorrow);
     }
 
     @GetMapping("/donotdisturb/disable")
     public String disableDoNotDisturb() {
         doNotDisturbManager.disableDoNotDisturbMode();
         return "Success";
+    }
+
+    @GetMapping("/donotdisturb/status")
+    public BellStatus.DoNotDisturbStatus getDoNotDisturbStatus() {
+        return doNotDisturbManager.getDisturbStatus();
     }
 
     @InitBinder

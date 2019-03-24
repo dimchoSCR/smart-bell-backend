@@ -6,7 +6,6 @@ import java.util.Map;
 public class JobParams {
     private final Map<String, Object> paramsMap;
 
-
     public JobParams() {
         paramsMap = new HashMap<>();
     }
@@ -35,5 +34,18 @@ public class JobParams {
         }
 
         return (String) el;
+    }
+
+    public void putIntArray(String key, int[] value) {
+        paramsMap.put(key, value);
+    }
+
+    public int[] getIntArray(String key) {
+        Object el = paramsMap.get(key);
+        if (el == null) {
+            return new int[]{};
+        }
+
+        return (int[]) el;
     }
 }

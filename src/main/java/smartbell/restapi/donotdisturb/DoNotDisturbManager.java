@@ -21,6 +21,8 @@ public class DoNotDisturbManager {
 
     private final Logger log = LoggerFactory.getLogger(DoNotDisturbManager.class);
 
+    public static final String KEY_DAYS_ARRAY = "DaysArray";
+
     @Autowired
     private BellStatus bellStatus;
 
@@ -33,8 +35,9 @@ public class DoNotDisturbManager {
     @Autowired
     private JobManager jobManager;
 
-    private void updateDoNotDisturbStatus(long startTimeMillis, long endTimeMillis, boolean endTomorrow) {
+    private void updateDoNotDisturbStatus(int[] days, long startTimeMillis, long endTimeMillis, boolean endTomorrow) {
         BellStatus.DoNotDisturbStatus doNotDisturbStatus = bellStatus.getDoNotDisturbStatus();
+        doNotDisturbStatus.setDays(days);
         doNotDisturbStatus.setStartTimeMillis(startTimeMillis);
         doNotDisturbStatus.setEndTimeMillis(endTimeMillis);
         doNotDisturbStatus.setEndTomorrow(endTomorrow);
@@ -47,7 +50,7 @@ public class DoNotDisturbManager {
         log.info("Delay before start: " + initialDelayForJobStart);
 
         jobManager.cancelJobById(ENABLE_DO_NOT_DISTURB_REQUEST_ID, true);
-        if (initialDelayForJobStart > 0) {
+        if (initialDelayForJobStart >= 0) {
             disableDoNotDisturbMode();
             scheduleDoNotDisturbStartJob(initialDelayForJobStart);
         } else {
@@ -58,6 +61,7 @@ public class DoNotDisturbManager {
     }
 
     private void scheduleDoNotDisturbStartJob(long initialDelayForStartJob) {
+        startDoNotDisturbJob.getJobParams().putIntArray(KEY_DAYS_ARRAY, bellStatus.getDoNotDisturbStatus().getDays());
 
         JobRequest startDoNotDisturbRequest = new JobRequest.Builder(startDoNotDisturbJob)
                 .setRequestId(ENABLE_DO_NOT_DISTURB_REQUEST_ID)
@@ -74,7 +78,7 @@ public class DoNotDisturbManager {
         log.info("Delay before end: " + initialDelayForJobEnd);
 
         jobManager.cancelJobById(DISABLE_DO_NOT_DISTURB_REQUEST_ID, true);
-        if (initialDelayForJobEnd > 0) {
+        if (initialDelayForJobEnd >= 0) {
             scheduleDoNotDisturbEndJob(initialDelayForJobEnd);
         } else {
             disableDoNotDisturbMode();
@@ -94,6 +98,10 @@ public class DoNotDisturbManager {
         jobManager.schedule(endDoNotDisturbRequest);
     }
 
+    public BellStatus.DoNotDisturbStatus getDisturbStatus() {
+        return bellStatus.getDoNotDisturbStatus();
+    }
+
     public void enableDoNotDisturbMode() {
         bellStatus.getDoNotDisturbStatus().setInDoNotDisturb(true);
     }
@@ -102,20 +110,26 @@ public class DoNotDisturbManager {
         bellStatus.getDoNotDisturbStatus().setInDoNotDisturb(false);
     }
 
-    public void scheduleDoNotDisturb(long startTimeMillis, long endTimeMillis, boolean endTomorrow) {
+    public void scheduleDoNotDisturb(int[] days, long startTimeMillis, long endTimeMillis, boolean endTomorrow) {
         try {
-            updateDoNotDisturbStatus(startTimeMillis, endTimeMillis, endTomorrow);
+            updateDoNotDisturbStatus(days, startTimeMillis, endTimeMillis, endTomorrow);
 
-            LocalDateTime startDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(startTimeMillis), ZoneId.systemDefault());
+            Instant startInstant = Instant.ofEpochMilli(startTimeMillis);
+            LocalTime startLocalTime = LocalTime.from(startInstant.atZone(ZoneId.systemDefault()));
+            LocalDateTime startDateTime = startLocalTime.atDate(LocalDate.now());
+
+            LocalTime endLocalTime = LocalTime.from(Instant.ofEpochMilli(endTimeMillis).atZone(ZoneId.systemDefault()));
             LocalDateTime endDateTime;
 
             if (endTomorrow) {
-                endDateTime = LocalDateTime.ofInstant(
-                        Instant.ofEpochMilli(endTimeMillis),
-                        ZoneId.systemDefault()
-                ).plusDays(1);
+                endDateTime = endLocalTime.atDate(LocalDate.now().plusDays(1));
             } else {
-                endDateTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(endTimeMillis), ZoneId.systemDefault());
+                endDateTime = endLocalTime.atDate(LocalDate.now());
+            }
+
+            if (startDateTime.isEqual(endDateTime) || startDateTime.isAfter(endDateTime)) {
+                log.error("Star time must be lower than end time!");
+                return;
             }
 
             rescheduleDoNotDisturbStart(startDateTime);
