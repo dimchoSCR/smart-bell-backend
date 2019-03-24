@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import smartbell.restapi.exceptions.BackendException;
 import smartbell.restapi.firebase.FirebaseNotificationService;
 import smartbell.restapi.log.RingLogManager;
+import smartbell.restapi.status.BellStatus;
 
 @Component
 public class SmartBellBackend {

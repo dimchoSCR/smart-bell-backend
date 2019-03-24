@@ -76,7 +76,7 @@ public class FileSystemStorageService implements StorageService {
             return null;
         }
 
-        if(files.size() > 1) {
+        if (files.size() > 1) {
             throw new Exception("Too many files in directory!");
         }
 

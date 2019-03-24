@@ -5,12 +5,13 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import smartbell.restapi.db.ComparisonSigns;
-import smartbell.restapi.db.SmartBellRepository;
 import smartbell.restapi.db.entities.RingEntry;
 import smartbell.restapi.donotdisturb.DoNotDisturbManager;
 import smartbell.restapi.log.RingLogManager;
 import smartbell.restapi.melody.MelodyInfo;
 import smartbell.restapi.melody.MelodyManager;
+import smartbell.restapi.status.BellStatus;
+import smartbell.restapi.status.DoNotDisturbStatus;
 
 import javax.ws.rs.QueryParam;
 import java.util.List;
@@ -73,7 +74,7 @@ public class MelodiesController {
     }
 
     @GetMapping("/donotdisturb/status")
-    public BellStatus.DoNotDisturbStatus getDoNotDisturbStatus() {
+    public DoNotDisturbStatus getDoNotDisturbStatus() {
         return doNotDisturbManager.getDisturbStatus();
     }
 

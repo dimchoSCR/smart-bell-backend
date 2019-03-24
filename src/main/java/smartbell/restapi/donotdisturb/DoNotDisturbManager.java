@@ -1,23 +1,32 @@
 package smartbell.restapi.donotdisturb;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import smartbell.restapi.BellStatus;
+import smartbell.restapi.BellExecutorService;
+import smartbell.restapi.status.BellStatus;
 import smartbell.restapi.job.JobManager;
 import smartbell.restapi.job.JobRequest;
+import smartbell.restapi.melody.MelodyStorageProperties;
+import smartbell.restapi.status.DoNotDisturbStatus;
 
+import javax.annotation.PostConstruct;
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Paths;
 import java.time.*;
 import java.util.concurrent.TimeUnit;
 
 @Component
 public class DoNotDisturbManager {
 
-    private static final long PERIOD_24_HOURS_AS_SECONDS = 120; // 86400
+    private static final long PERIOD_24_HOURS_AS_SECONDS = 120; // TODO 86400
 
     private static final String ENABLE_DO_NOT_DISTURB_REQUEST_ID = "StartDoNotDisturb";
     private static final String DISABLE_DO_NOT_DISTURB_REQUEST_ID = "EndDoNotDisturb";
+    private static final String DO_NOT_DISTURB_CONFIG_FILE_NAME = "DoNotDisturbConf.json";
 
     private final Logger log = LoggerFactory.getLogger(DoNotDisturbManager.class);
 
@@ -25,6 +34,15 @@ public class DoNotDisturbManager {
 
     @Autowired
     private BellStatus bellStatus;
+
+    @Autowired
+    private ObjectMapper jacksonObjectMapper;
+
+    @Autowired
+    private MelodyStorageProperties melodyStorageProps;
+
+    @Autowired
+    private BellExecutorService bellExecutorService;
 
     @Autowired
     private StartDoNotDisturbJob startDoNotDisturbJob;
@@ -35,14 +53,34 @@ public class DoNotDisturbManager {
     @Autowired
     private JobManager jobManager;
 
+
+    private String doNotDisturbConfPath;
+
+    @PostConstruct
+    private void init() {
+         doNotDisturbConfPath = Paths.get(
+                melodyStorageProps.getBaseDirPath(),
+                DO_NOT_DISTURB_CONFIG_FILE_NAME
+        ).toString();
+    }
+
     private void updateDoNotDisturbStatus(int[] days, long startTimeMillis, long endTimeMillis, boolean endTomorrow) {
-        BellStatus.DoNotDisturbStatus doNotDisturbStatus = bellStatus.getDoNotDisturbStatus();
+        DoNotDisturbStatus doNotDisturbStatus = bellStatus.getDoNotDisturbStatus();
         doNotDisturbStatus.setDays(days);
         doNotDisturbStatus.setStartTimeMillis(startTimeMillis);
         doNotDisturbStatus.setEndTimeMillis(endTimeMillis);
         doNotDisturbStatus.setEndTomorrow(endTomorrow);
 
-        // TODO save to db
+        // Persist config async
+        bellExecutorService.io.execute(() -> {
+            try {
+                jacksonObjectMapper.writeValue(new File(doNotDisturbConfPath), doNotDisturbStatus);
+                log.info("Persisted DoNotDisturb conf");
+            } catch (IOException e) {
+                log.error("Error while saving do not disturb configuration", e);
+            }
+        });
+
     }
 
     private void rescheduleDoNotDisturbStart(LocalDateTime startDateTime) {
@@ -98,10 +136,31 @@ public class DoNotDisturbManager {
         jobManager.schedule(endDoNotDisturbRequest);
     }
 
-    public BellStatus.DoNotDisturbStatus getDisturbStatus() {
+    public DoNotDisturbStatus getDisturbStatus() {
         return bellStatus.getDoNotDisturbStatus();
     }
 
+    public void readDoNoDisturbConfigAndReschedule() {
+        // Deserialize config async
+        bellExecutorService.io.execute(() -> {
+            try {
+                DoNotDisturbStatus doNotDisturbStatus = jacksonObjectMapper.readValue(
+                        new File(doNotDisturbConfPath),
+                        DoNotDisturbStatus.class
+                );
+
+                log.info("Deserialized DoNotDisturb conf. Rescheduling ...");
+                scheduleDoNotDisturb(
+                        doNotDisturbStatus.getDays(),
+                        doNotDisturbStatus.getStartTimeMillis(),
+                        doNotDisturbStatus.getEndTimeMillis(),
+                        doNotDisturbStatus.isEndTomorrow()
+                );
+            } catch (IOException e) {
+                log.error("Error while reading do not disturb configuration", e);
+            }
+        });
+    }
     public void enableDoNotDisturbMode() {
         bellStatus.getDoNotDisturbStatus().setInDoNotDisturb(true);
     }
