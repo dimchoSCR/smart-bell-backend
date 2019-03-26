@@ -22,8 +22,6 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class DoNotDisturbManager {
 
-    private static final long PERIOD_24_HOURS_AS_SECONDS = 120; // TODO 86400
-
     private static final String ENABLE_DO_NOT_DISTURB_REQUEST_ID = "StartDoNotDisturb";
     private static final String DISABLE_DO_NOT_DISTURB_REQUEST_ID = "EndDoNotDisturb";
     private static final String DO_NOT_DISTURB_CONFIG_FILE_NAME = "DoNotDisturbConf.json";
@@ -31,6 +29,8 @@ public class DoNotDisturbManager {
     private final Logger log = LoggerFactory.getLogger(DoNotDisturbManager.class);
 
     public static final String KEY_DAYS_ARRAY = "DaysArray";
+    public static final String KEY_DISTURB_DURATION = "DisturbDuration";
+    public static final long PERIOD_24_HOURS_AS_SECONDS = 86400;
 
     @Autowired
     private BellStatus bellStatus;
@@ -93,14 +93,12 @@ public class DoNotDisturbManager {
             scheduleDoNotDisturbStartJob(initialDelayForJobStart);
         } else {
             enableDoNotDisturbMode();
-            LocalDateTime newStartDateTime = startDateTime.plusDays(1);
+            LocalDateTime newStartDateTime = startDateTime.plusSeconds(PERIOD_24_HOURS_AS_SECONDS);
             scheduleDoNotDisturbStartJob(Duration.between(LocalDateTime.now(), newStartDateTime).getSeconds());
         }
     }
 
     private void scheduleDoNotDisturbStartJob(long initialDelayForStartJob) {
-        startDoNotDisturbJob.getJobParams().putIntArray(KEY_DAYS_ARRAY, bellStatus.getDoNotDisturbStatus().getDays());
-
         JobRequest startDoNotDisturbRequest = new JobRequest.Builder(startDoNotDisturbJob)
                 .setRequestId(ENABLE_DO_NOT_DISTURB_REQUEST_ID)
                 .setStartDelay(initialDelayForStartJob)
@@ -120,7 +118,7 @@ public class DoNotDisturbManager {
             scheduleDoNotDisturbEndJob(initialDelayForJobEnd);
         } else {
             disableDoNotDisturbMode();
-            LocalDateTime newEndDateTime = endDateTime.plusDays(1);
+            LocalDateTime newEndDateTime = endDateTime.plusSeconds(PERIOD_24_HOURS_AS_SECONDS);
             scheduleDoNotDisturbEndJob(Duration.between(LocalDateTime.now(), newEndDateTime).getSeconds());
         }
     }
@@ -181,7 +179,7 @@ public class DoNotDisturbManager {
             LocalDateTime endDateTime;
 
             if (endTomorrow) {
-                endDateTime = endLocalTime.atDate(LocalDate.now().plusDays(1));
+                endDateTime = endLocalTime.atDate(LocalDate.now()).plusSeconds(PERIOD_24_HOURS_AS_SECONDS);
             } else {
                 endDateTime = endLocalTime.atDate(LocalDate.now());
             }
@@ -190,6 +188,13 @@ public class DoNotDisturbManager {
                 log.error("Star time must be lower than end time!");
                 return;
             }
+
+            startDoNotDisturbJob.getJobParams().putIntArray(KEY_DAYS_ARRAY, bellStatus.getDoNotDisturbStatus().getDays());
+            endDoNotDisturbJob.getJobParams().putIntArray(KEY_DAYS_ARRAY, bellStatus.getDoNotDisturbStatus().getDays());
+            endDoNotDisturbJob.getJobParams().putLong(
+                    KEY_DISTURB_DURATION,
+                    Duration.between(startDateTime, endDateTime).getSeconds()
+            );
 
             rescheduleDoNotDisturbStart(startDateTime);
             rescheduleDoNotDisturbEnd(endDateTime);

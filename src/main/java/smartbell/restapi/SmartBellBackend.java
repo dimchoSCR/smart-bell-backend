@@ -11,6 +11,7 @@ import smartbell.backend.model.audio.ProcessAudioPlayback;
 import smartbell.backend.model.kernelinterface.KernelInterfacePinManager;
 import org.springframework.stereotype.Component;
 import smartbell.restapi.exceptions.BackendException;
+import smartbell.restapi.firebase.BellFirebaseMessages;
 import smartbell.restapi.firebase.FirebaseNotificationService;
 import smartbell.restapi.log.RingLogManager;
 import smartbell.restapi.status.BellStatus;
@@ -27,10 +28,16 @@ public class SmartBellBackend {
 
     @Autowired
     private RingLogManager ringLogManager;
+
     @Autowired
     private FirebaseNotificationService notificationService;
+
     @Autowired
     private BellStatus bellStatus;
+
+    @Autowired
+    private BellFirebaseMessages bellFirebaseMessages;
+
 
     public SmartBellBackend() throws BackendException {
         try {
@@ -65,12 +72,13 @@ public class SmartBellBackend {
                 try {
                     String playingMelodyName = player.getCurrentSongName();
                     if (value == 1 && !playingMelodyName.isEmpty() && !player.isPlaying()) {
-                        if (!bellStatus.getDoNotDisturbStatus().isInDoNotDisturb()) {
+                        boolean isInDoNotDisturb = bellStatus.getDoNotDisturbStatus().isInDoNotDisturb();
+                        if (!isInDoNotDisturb) {
                             audioBlockPin.setValue(Pin.Value.HIGH);
                             player.play();
                         }
                         ringLogManager.addToRingLogAsync(playingMelodyName);
-                        notificationService.sendPushNotificationAsync();
+                        notificationService.sendPushNotificationAsync(bellFirebaseMessages.constructRingMessage(isInDoNotDisturb));
                     } else if (player.getPlaybackMode() == PlaybackMode.MODE_STOP_ON_RELEASE) {
                         player.stop();
                     }
