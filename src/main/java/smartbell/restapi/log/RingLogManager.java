@@ -17,12 +17,12 @@ public class RingLogManager {
     @Autowired
     private SmartBellRepository bellRepository;
 
-    public List<RingEntry> getAllRingLogEntries(ComparisonSigns compSign, String timeString) {
-        if (compSign == null && timeString == null) {
+    public List<RingEntry> getAllRingLogEntries(ComparisonSigns compSign, String timeStringUTC) {
+        if (compSign == null && timeStringUTC == null) {
             return bellRepository.getAllRingEntries();
         }
 
-        return bellRepository.getRingEntriesBasedOn(compSign, timeString);
+        return bellRepository.getRingEntriesBasedOn(compSign, timeStringUTC);
     }
 
     public void addRingToLog(String playingMelodyName) {

@@ -1,14 +1,14 @@
 package smartbell.restapi.db.entities;
 
 
-import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
 
 public class RingEntry {
     private long id;
     private String melodyName;
-    private LocalDateTime dateTime;
+    private OffsetDateTime dateTime;
 
-    public RingEntry(long id, String melodyName, LocalDateTime dateTime) {
+    public RingEntry(long id, String melodyName, OffsetDateTime dateTime) {
         this.id = id;
         this.melodyName = melodyName;
         this.dateTime = dateTime;
@@ -30,11 +30,11 @@ public class RingEntry {
         this.melodyName = melodyName;
     }
 
-    public LocalDateTime getDateTime() {
+    public OffsetDateTime getDateTime() {
         return dateTime;
     }
 
-    public void setDateTime(LocalDateTime dateTime) {
+    public void setDateTime(OffsetDateTime dateTime) {
         this.dateTime = dateTime;
     }
 }

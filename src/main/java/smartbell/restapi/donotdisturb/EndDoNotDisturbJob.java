@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 import smartbell.restapi.firebase.FirebaseNotificationService;
 import smartbell.restapi.job.Job;
 
+import java.time.Clock;
 import java.time.LocalDateTime;
 
 @Component
@@ -32,7 +33,7 @@ public class EndDoNotDisturbJob extends Job {
             log.info("Sending missed rings if any!");
 
             long disturbDuration = getJobParams().getLong(DoNotDisturbManager.KEY_DISTURB_DURATION, 0);
-            firebaseNotificationService.sendDoNotDisturbReportFrom(LocalDateTime.now().minusSeconds(disturbDuration));
+            firebaseNotificationService.sendDoNotDisturbReportFrom(LocalDateTime.now(Clock.systemUTC()).minusSeconds(disturbDuration));
         }
     }
 }

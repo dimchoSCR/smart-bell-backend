@@ -8,6 +8,8 @@ import smartbell.restapi.db.entities.RingEntry;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Repository
@@ -26,8 +28,8 @@ public class SmartBellRepository {
 
         long id = resultSet.getLong(SmartBellDBContract.RingEntryColumns.COLUMN_ID);
         String melodyName = resultSet.getString(SmartBellDBContract.RingEntryColumns.COLUMN_RINGTONE_NAME);
-        LocalDateTime createdAt = resultSet.getTimestamp(SmartBellDBContract.RingEntryColumns.COLUMN_TIMESTAMP)
-                        .toLocalDateTime();
+        OffsetDateTime createdAt = OffsetDateTime.ofInstant(resultSet.getTimestamp(SmartBellDBContract.RingEntryColumns.COLUMN_TIMESTAMP)
+                        .toInstant(), ZoneId.systemDefault());
 
         return new RingEntry(id, melodyName, createdAt);
     }

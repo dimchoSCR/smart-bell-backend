@@ -105,8 +105,8 @@ public class FirebaseNotificationService {
         });
     }
 
-    public void sendDoNotDisturbReportFrom(LocalDateTime queryTime) {
-        String dateTimeString = queryTime.format(DateTimeFormatter.ISO_DATE_TIME);
+    public void sendDoNotDisturbReportFrom(LocalDateTime queryTimeUTC) {
+        String dateTimeString = queryTimeUTC.format(DateTimeFormatter.ISO_DATE_TIME);
 
         List<RingEntry> ringEntries = smartBellRepository.getRingEntriesBasedOn(ComparisonSigns.GRATER_THAN_OR_EQUALS, dateTimeString);
         if (ringEntries.isEmpty()) {
