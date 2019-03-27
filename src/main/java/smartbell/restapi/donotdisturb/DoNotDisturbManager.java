@@ -142,8 +142,14 @@ public class DoNotDisturbManager {
         // Deserialize config async
         bellExecutorService.io.execute(() -> {
             try {
+                File confFile = new File(doNotDisturbConfPath);
+                if (!confFile.exists()) {
+                    log.info("No do not disturb conf file found. Skipping deserialization");
+                    return;
+                }
+
                 DoNotDisturbStatus doNotDisturbStatus = jacksonObjectMapper.readValue(
-                        new File(doNotDisturbConfPath),
+                        confFile,
                         DoNotDisturbStatus.class
                 );
 
