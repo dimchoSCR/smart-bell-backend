@@ -7,16 +7,15 @@ import smartbell.restapi.db.entities.RingEntry;
 
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.List;
 
 @Repository
 public class SmartBellRepository {
-    private static final String QUERY_GET_ALL_RING_ENTRIES = "SELECT * FROM MAIN.RINGLOG;";
+    private static final String QUERY_GET_ALL_RING_ENTRIES = "SELECT * FROM MAIN.RINGLOG ORDER BY CREATED_AT DESC;";
     private static final String QUERY_INSERT_RING = "INSERT INTO MAIN.RINGLOG (RINGTONE_NAME) VALUES (?)";
-    private static final String QUERY_GET_ENTRIES_USING_COMPARISON = "SELECT * FROM MAIN.RINGLOG WHERE CREATED_AT <sign> ?";
+    private static final String QUERY_GET_ENTRIES_USING_COMPARISON = "SELECT * FROM MAIN.RINGLOG WHERE CREATED_AT <sign> ? ORDER BY CREATED_AT DESC";
     private static final String QUERY_REGISTER_APP_INSTANCE = "MERGE INTO MAIN.APPINSTANCE KEY(APP_GUID) VALUES (?, ?)";
     private static final String QUERY_GET_ALL_APP_INSTANCE_TOKENS = "SELECT * FROM MAIN.APPINSTANCE";
     private static final String QUERY_DELETE_APP_INSTANCE_BY_TOKEN = "DELETE FROM MAIN.APPINSTANCE WHERE FIREBASE_TOKEN = ?";
