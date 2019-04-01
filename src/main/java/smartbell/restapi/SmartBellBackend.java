@@ -106,6 +106,9 @@ public class SmartBellBackend {
     public void setPlayerMode(PlaybackMode playbackMode) {
         player.setPlaybackMode(playbackMode);
     }
+    public void setPlayerPlaybackTime(int seconds) {
+        player.setPlaybackStopTime(seconds);
+    }
 
     public void freeUpResources() {
         player.stop();

@@ -78,6 +78,12 @@ public class MelodiesController {
         return doNotDisturbManager.getDisturbStatus();
     }
 
+    @GetMapping("/status")
+    public BellStatus getBellStatus() {
+        return melodyManager.getBellStatus();
+    }
+
+
     @InitBinder
     public void initBinder(final WebDataBinder webdataBinder) {
         webdataBinder.registerCustomEditor(ComparisonSigns.class, new SignToEnumConverter());

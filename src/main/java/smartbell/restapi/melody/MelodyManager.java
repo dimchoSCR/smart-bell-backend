@@ -14,6 +14,8 @@ import smartbell.backend.model.audio.PlaybackMode;
 import smartbell.restapi.exceptions.BackendException;
 import smartbell.restapi.exceptions.BellServiceException;
 import smartbell.restapi.SmartBellBackend;
+import smartbell.restapi.status.BellStatus;
+import smartbell.restapi.status.CoreStatusManager;
 import smartbell.restapi.storage.StorageService;
 
 import javax.annotation.PostConstruct;
@@ -37,6 +39,10 @@ public class MelodyManager {
     private AudioMetadataExtractor audioMetadataExtractor;
     @Autowired
     private SmartBellBackend smartBellBackend;
+    @Autowired
+    private BellStatus bellStatus;
+    @Autowired
+    private CoreStatusManager coreStatusManager;
 
     private final Logger log = LoggerFactory.getLogger(MelodyManager.class);
 
@@ -49,7 +55,16 @@ public class MelodyManager {
             // Creates the "set" ringtone directory if not created
             storageService.createDirectory(melodyStorageProps.getRingtoneDirPath());
 
-            initBellBackEnd();
+            coreStatusManager.readCoreConfig();
+
+            String pathToNewRingtone = getPathToRingtone();
+            if(pathToNewRingtone == null) {
+                pathToNewRingtone = ""; // TODO maybe a default ringtone
+            } else {
+                bellStatus.getCoreStatus().setCurrentRingtone(getRingtoneInfo().getMelodyName());
+            }
+
+            initBellBackEnd(pathToNewRingtone);
         } catch (IOException e) {
             throw new BellServiceException("IO error. Could not create melody directories!", e);
         } catch (BackendException e) {
@@ -155,6 +170,8 @@ public class MelodyManager {
             storageService.link(resolvePathToMelody(melodyName), melodyStorageProps.getRingtoneDirPath());
             // Set backend player to play the new ringtone
             smartBellBackend.updatePlayerRingtone(resolvePathToRingtone(melodyName));
+            // Update Bell status
+            bellStatus.getCoreStatus().setCurrentRingtone(melodyName);
 
             return "Ringtone set successfully";
         } catch (IOException e) {
@@ -221,17 +238,16 @@ public class MelodyManager {
         return true;
     }
 
-    /* --- Backend operations --- */
-    private void initBellBackEnd() throws BackendException, BellServiceException {
-        String pathToNewRingtone = getPathToRingtone();
-        if(pathToNewRingtone == null) {
-            pathToNewRingtone = ""; // TODO maybe a default ringtone
-        }
+    public BellStatus getBellStatus() {
+        return bellStatus;
+    }
 
+    /* --- Backend operations --- */
+    private void initBellBackEnd(String pathToRingtone) throws BackendException, BellServiceException {
         // Set current ringtone to be played
-        smartBellBackend.updatePlayerRingtone(pathToNewRingtone);
-        // TODO apply player mode from server preference
-        smartBellBackend.setPlayerMode(PlaybackMode.MODE_STOP_AFTER_DELAY);
+        smartBellBackend.updatePlayerRingtone(pathToRingtone);
+        smartBellBackend.setPlayerMode(PlaybackMode.valueOf(bellStatus.getCoreStatus().getPlaybackMode()));
+        smartBellBackend.setPlayerPlaybackTime(bellStatus.getCoreStatus().getPlaybackTime());
         // Listens for raspberryPi button clicks
         // TODO apply debounce from server preference
         smartBellBackend.initializeBellButtonListener(GPIO.PIN_0, 100);
