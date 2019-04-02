@@ -258,6 +258,15 @@ public class MelodyManager {
         smartBellBackend.setPlayerMode(PlaybackMode.valueOf(playbackMode));
     }
 
+    public void setBellPlaybackDuration(int duration) {
+        if (duration < 10 || duration > 60) {
+            throw new BellServiceException("Playback duration must be betweeen 10 and 60!");
+        }
+
+        bellStatus.getCoreStatus().setPlaybackTime(duration);
+        smartBellBackend.setPlayerPlaybackTime(duration);
+    }
+
     @PreDestroy
     public void onPreDestroy() {
         smartBellBackend.freeUpResources();

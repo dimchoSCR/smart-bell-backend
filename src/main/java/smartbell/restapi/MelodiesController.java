@@ -88,6 +88,11 @@ public class MelodiesController {
         melodyManager.setBellPlaybackMode(playbackMode);
     }
 
+    @PutMapping("/status/playbackDuration")
+    public void setPlaybackDuration(@RequestParam("playbackDuration") int playbackDuration) {
+        melodyManager.setBellPlaybackDuration(playbackDuration);
+    }
+
     @InitBinder
     public void initBinder(final WebDataBinder webdataBinder) {
         webdataBinder.registerCustomEditor(ComparisonSigns.class, new SignToEnumConverter());
