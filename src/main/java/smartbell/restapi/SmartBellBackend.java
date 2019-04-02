@@ -6,7 +6,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import smartbell.backend.model.GPIO;
 import smartbell.backend.model.Pin;
 import smartbell.backend.model.PinManager;
+import smartbell.backend.model.audio.AudioControl;
 import smartbell.backend.model.audio.PlaybackMode;
+import smartbell.backend.model.audio.ProcessAudioControl;
 import smartbell.backend.model.audio.ProcessAudioPlayback;
 import smartbell.backend.model.kernelinterface.KernelInterfacePinManager;
 import org.springframework.stereotype.Component;
@@ -16,12 +18,15 @@ import smartbell.restapi.firebase.FirebaseNotificationService;
 import smartbell.restapi.log.RingLogManager;
 import smartbell.restapi.status.BellStatus;
 
+import java.io.IOException;
+
 @Component
 public class SmartBellBackend {
     private final Logger log = LoggerFactory.getLogger(SmartBellBackend.class);
 
     private final PinManager pinManager;
     private final ProcessAudioPlayback player;
+    private final ProcessAudioControl audioControl;
 
     private Pin bellButtonPin;
     private Pin audioBlockPin;
@@ -49,6 +54,7 @@ public class SmartBellBackend {
         }
 
         player = new ProcessAudioPlayback();
+        audioControl = new ProcessAudioControl();
     }
 
     @SuppressWarnings("Duplicates")
@@ -108,6 +114,15 @@ public class SmartBellBackend {
     }
     public void setPlayerPlaybackTime(int seconds) {
         player.setPlaybackStopTime(seconds);
+    }
+
+    public void setRingVolume(int percent) throws BackendException {
+        try {
+            audioControl.setVolumeLevel(percent);
+        } catch (Exception e) {
+            audioControl.killAudioAdjustingProcess();
+            throw new BackendException("Changing hardware volume failed!", e);
+        }
     }
 
     public void freeUpResources() {

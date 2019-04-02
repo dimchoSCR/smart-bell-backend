@@ -55,8 +55,6 @@ public class MelodyManager {
             // Creates the "set" ringtone directory if not created
             storageService.createDirectory(melodyStorageProps.getRingtoneDirPath());
 
-            coreStatusManager.readCoreConfig();
-
             String pathToNewRingtone = getPathToRingtone();
             if(pathToNewRingtone == null) {
                 pathToNewRingtone = ""; // TODO maybe a default ringtone
@@ -65,6 +63,7 @@ public class MelodyManager {
             }
 
             initBellBackEnd(pathToNewRingtone);
+            coreStatusManager.initializeCoreConfChangeListener();
         } catch (IOException e) {
             throw new BellServiceException("IO error. Could not create melody directories!", e);
         } catch (BackendException e) {
@@ -248,6 +247,7 @@ public class MelodyManager {
         smartBellBackend.updatePlayerRingtone(pathToRingtone);
         smartBellBackend.setPlayerMode(PlaybackMode.valueOf(bellStatus.getCoreStatus().getPlaybackMode()));
         smartBellBackend.setPlayerPlaybackTime(bellStatus.getCoreStatus().getPlaybackTime());
+        smartBellBackend.setRingVolume(bellStatus.getCoreStatus().getRingVolume());
         // Listens for raspberryPi button clicks
         // TODO apply debounce from server preference
         smartBellBackend.initializeBellButtonListener(GPIO.PIN_0, 100);
@@ -265,6 +265,19 @@ public class MelodyManager {
 
         bellStatus.getCoreStatus().setPlaybackTime(duration);
         smartBellBackend.setPlayerPlaybackTime(duration);
+    }
+
+    public void setBellVolume(int percent) {
+        try {
+            if (percent < 0 || percent > 100) {
+                throw new BellServiceException("Volume must be in the range [0, 100]");
+            }
+
+            bellStatus.getCoreStatus().setRingVolume(percent);
+            smartBellBackend.setRingVolume(percent);
+        } catch (BackendException e) {
+            throw new BellServiceException("Setting bell volume failed", e);
+        }
     }
 
     @PreDestroy

@@ -93,6 +93,11 @@ public class MelodiesController {
         melodyManager.setBellPlaybackDuration(playbackDuration);
     }
 
+    @PutMapping("/status/ringVolume")
+    public void setRingVolume(@RequestParam("ringVolume") int ringVolume) {
+        melodyManager.setBellVolume(ringVolume);
+    }
+
     @InitBinder
     public void initBinder(final WebDataBinder webdataBinder) {
         webdataBinder.registerCustomEditor(ComparisonSigns.class, new SignToEnumConverter());

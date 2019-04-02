@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 import smartbell.restapi.BellExecutorService;
 import smartbell.restapi.melody.MelodyStorageProperties;
@@ -40,6 +41,11 @@ public class CoreStatusManager {
                 CORE_CONFIG_FILE_NAME
         ).toString();
 
+        readCoreConfig();
+    }
+
+    // TODO remove listener
+    public void initializeCoreConfChangeListener() {
         bellStatus.getCoreStatus().addPropertyChangeListener(evt -> {
             saveCoreConfigAsync();
         });
@@ -59,25 +65,23 @@ public class CoreStatusManager {
 
 
     public void readCoreConfig() {
-        // Deserialize config async
-        bellExecutorService.io.execute(() -> {
-            try {
-                File confFile = new File(coreConfigStoragePath);
-                if (!confFile.exists()) {
-                    log.info("No bell conf file found. Skipping deserialization");
-                    return;
-                }
-
-                CoreStatus coreStatus = jacksonObjectMapper.readValue(confFile, CoreStatus.class);
-                bellStatus.getCoreStatus().setCurrentRingtone(coreStatus.getCurrentRingtone());
-                bellStatus.getCoreStatus().setPlaybackMode(coreStatus.getPlaybackMode());
-                bellStatus.getCoreStatus().setRingVolume(coreStatus.getRingVolume());
-
-                log.info("Deserialized Bell conf");
-
-            } catch (IOException e) {
-                log.error("Error while reading core configuration", e);
+        try {
+            File confFile = new File(coreConfigStoragePath);
+            if (!confFile.exists()) {
+                log.info("No bell conf file found. Skipping deserialization");
+                return;
             }
-        });
+
+            CoreStatus coreStatus = jacksonObjectMapper.readValue(confFile, CoreStatus.class);
+            bellStatus.getCoreStatus().setCurrentRingtone(coreStatus.getCurrentRingtone());
+            bellStatus.getCoreStatus().setPlaybackMode(coreStatus.getPlaybackMode());
+            bellStatus.getCoreStatus().setRingVolume(coreStatus.getRingVolume());
+            bellStatus.getCoreStatus().setPlaybackTime(coreStatus.getPlaybackTime());
+
+            log.info("Deserialized Bell conf");
+
+        } catch (IOException e) {
+            log.error("Error while reading core configuration", e);
+        }
     }
 }
