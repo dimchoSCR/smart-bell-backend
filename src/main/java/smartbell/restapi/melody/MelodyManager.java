@@ -253,6 +253,11 @@ public class MelodyManager {
         smartBellBackend.initializeBellButtonListener(GPIO.PIN_0, 100);
     }
 
+    public void setBellPlaybackMode(String playbackMode) {
+        bellStatus.getCoreStatus().setPlaybackMode(playbackMode);
+        smartBellBackend.setPlayerMode(PlaybackMode.valueOf(playbackMode));
+    }
+
     @PreDestroy
     public void onPreDestroy() {
         smartBellBackend.freeUpResources();

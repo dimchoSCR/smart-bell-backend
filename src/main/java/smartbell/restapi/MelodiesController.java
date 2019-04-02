@@ -83,6 +83,10 @@ public class MelodiesController {
         return melodyManager.getBellStatus();
     }
 
+    @PutMapping("/status/playbackMode")
+    public void setPlaybackMode(@RequestParam("playbackMode") String playbackMode) {
+        melodyManager.setBellPlaybackMode(playbackMode);
+    }
 
     @InitBinder
     public void initBinder(final WebDataBinder webdataBinder) {

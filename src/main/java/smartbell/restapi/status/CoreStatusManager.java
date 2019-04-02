@@ -50,7 +50,7 @@ public class CoreStatusManager {
         bellExecutorService.io.execute(() -> {
             try {
                 jacksonObjectMapper.writeValue(new File(coreConfigStoragePath), bellStatus.getCoreStatus());
-                log.info("Persisted DoNotDisturb conf");
+                log.info("Persisted Bell conf");
             } catch (IOException e) {
                 log.error("Error while saving do not disturb configuration", e);
             }
