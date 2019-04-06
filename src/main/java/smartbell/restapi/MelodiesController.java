@@ -98,6 +98,16 @@ public class MelodiesController {
         melodyManager.setBellVolume(ringVolume);
     }
 
+    @PutMapping("/preplay/start")
+    public void startMelodyPrePlay(@RequestParam("melodyName") String melodyName) {
+        melodyManager.startMelodyPrePlay(melodyName);
+    }
+
+    @PutMapping("/preplay/end")
+    public void endMelodyPrePlay() {
+        melodyManager.endMelodyPreplay();
+    }
+
     @InitBinder
     public void initBinder(final WebDataBinder webdataBinder) {
         webdataBinder.registerCustomEditor(ComparisonSigns.class, new SignToEnumConverter());

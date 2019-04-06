@@ -26,6 +26,7 @@ public class SmartBellBackend {
 
     private final PinManager pinManager;
     private final ProcessAudioPlayback player;
+    private final ProcessAudioPlayback prePlayPlayer;
     private final ProcessAudioControl audioControl;
 
     private Pin bellButtonPin;
@@ -54,7 +55,21 @@ public class SmartBellBackend {
         }
 
         player = new ProcessAudioPlayback();
+
+        prePlayPlayer = new ProcessAudioPlayback();
+        prePlayPlayer.setPlaybackMode(PlaybackMode.MODE_STOP_AFTER_DELAY);
+        prePlayPlayer.setPlaybackStopTime(30);
+        prePlayPlayer.setOnStopListener(this::enableSoundBlock);
+
         audioControl = new ProcessAudioControl();
+    }
+
+    private void enableSoundBlock() {
+        try {
+            audioBlockPin.setValue(Pin.Value.LOW);
+        } catch (Exception e) {
+            log.error("Could not set pin to low!", e);
+        }
     }
 
     @SuppressWarnings("Duplicates")
@@ -65,13 +80,7 @@ public class SmartBellBackend {
             // Enable button debounce
             bellButtonPin.setDebounce(debounce);
 
-            player.setOnStopListener(() -> {
-                try {
-                    audioBlockPin.setValue(Pin.Value.LOW);
-                } catch (Exception e) {
-                    log.error("Could not set pin to low!", e);
-                }
-            });
+            player.setOnStopListener(this::enableSoundBlock);
 
             // Listen for button clicks
             bellButtonPin.setOnValueChangedListener((value) -> {
@@ -80,6 +89,7 @@ public class SmartBellBackend {
                     if (value == 1 && !playingMelodyName.isEmpty() && !player.isPlaying()) {
                         boolean isInDoNotDisturb = bellStatus.getDoNotDisturbStatus().isInDoNotDisturb();
                         if (!isInDoNotDisturb) {
+                            prePlayPlayer.stop();
                             audioBlockPin.setValue(Pin.Value.HIGH);
                             player.play();
                         }
@@ -122,6 +132,25 @@ public class SmartBellBackend {
         } catch (Exception e) {
             audioControl.killAudioAdjustingProcess();
             throw new BackendException("Changing hardware volume failed!", e);
+        }
+    }
+
+    public void prePlay(String pathMelody) throws BackendException {
+        try {
+            prePlayPlayer.updateAudio(pathMelody);
+            if (!prePlayPlayer.isPlaying() || !player.isPlaying()) {
+                audioBlockPin.setValue(Pin.Value.HIGH);
+                prePlayPlayer.play();
+            }
+        } catch (Exception e) {
+            freeUpResources();
+            throw new BackendException("Could start playing melody!", e);
+        }
+    }
+
+    public void stopPrePlay() {
+        if (!player.isPlaying()) {
+            prePlayPlayer.stop();
         }
     }
 

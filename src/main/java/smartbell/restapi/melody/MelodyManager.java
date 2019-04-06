@@ -280,6 +280,18 @@ public class MelodyManager {
         }
     }
 
+    public void startMelodyPrePlay(String melodyName) {
+        try {
+            smartBellBackend.prePlay(resolvePathToMelody(melodyName));
+        } catch (BackendException | IOException e) {
+            throw new BellServiceException("Could not pre-play melody", e);
+        }
+    }
+
+    public void endMelodyPreplay() {
+        smartBellBackend.stopPrePlay();
+    }
+
     @PreDestroy
     public void onPreDestroy() {
         smartBellBackend.freeUpResources();
