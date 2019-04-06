@@ -233,6 +233,24 @@ public class MelodyManager {
         return storageService.isFile(melodyStorageProps.getRingtoneDirPath(), melodyName);
     }
 
+    public void deleteMelody(String melodyName) {
+        try {
+            MelodyInfo ringtoneInfo = getRingtoneInfo();
+            if (ringtoneInfo != null) {
+                boolean isRingtone = ringtoneInfo.getMelodyName().equalsIgnoreCase(melodyName);
+                if (isRingtone) {
+                    String linkToRingTone = resolvePathToRingtone(melodyName);
+                    storageService.unlink(linkToRingTone);
+                }
+            }
+
+            String actualPath = resolvePathToMelody(melodyName);
+            storageService.delete(actualPath);
+        } catch (IOException e) {
+           throw new BellServiceException("Could not delete melody", e);
+        }
+    }
+
     public boolean searchMelodyLibraryFor() {
         return true;
     }
@@ -288,7 +306,7 @@ public class MelodyManager {
         }
     }
 
-    public void endMelodyPreplay() {
+    public void endMelodyPrePlay() {
         smartBellBackend.stopPrePlay();
     }
 

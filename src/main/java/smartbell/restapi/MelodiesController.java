@@ -105,7 +105,12 @@ public class MelodiesController {
 
     @PutMapping("/preplay/end")
     public void endMelodyPrePlay() {
-        melodyManager.endMelodyPreplay();
+        melodyManager.endMelodyPrePlay();
+    }
+
+    @PutMapping("/delete")
+    public void deleteMelody(@RequestParam("melodyName") String melodyName) {
+        melodyManager.deleteMelody(melodyName);
     }
 
     @InitBinder

@@ -137,8 +137,8 @@ public class SmartBellBackend {
 
     public void prePlay(String pathMelody) throws BackendException {
         try {
-            prePlayPlayer.updateAudio(pathMelody);
-            if (!prePlayPlayer.isPlaying() || !player.isPlaying()) {
+            if (!prePlayPlayer.isPlaying() && !player.isPlaying()) {
+                prePlayPlayer.updateAudio(pathMelody);
                 audioBlockPin.setValue(Pin.Value.HIGH);
                 prePlayPlayer.play();
             }
