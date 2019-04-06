@@ -23,6 +23,7 @@ import javax.annotation.PreDestroy;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -122,7 +123,6 @@ public class MelodyManager {
     }
 
     private MelodyInfo constructMelodyInfoFor(Path melodyPath)  {
-        // TODO duration
         try {
             String melodyName = melodyPath.getFileName().toString();
             String melodyFilePath = melodyPath.toAbsolutePath().toString();
@@ -131,7 +131,14 @@ public class MelodyManager {
             boolean ringtone = isCurrentRingtone(melodyName);
             Metadata melodyMetadata = audioMetadataExtractor.parseAudioFileMetadata(melodyFilePath);
             String melodyDuration = audioMetadataExtractor.tryExtractingDuration(melodyMetadata, melodyFilePath);
-            String melodyType = melodyMetadata.get(AudioMetadataExtractor.META_CONTENT_TYPE);
+
+            String melodyType = AudioMetadataExtractor.UNKNOWN_AUDIO_CONTENT_TYPE;
+            if (melodyMetadata == null) {
+                audioMetadataExtractor.detectContentType(
+                        new BufferedInputStream(Files.newInputStream(melodyPath)));
+            } else {
+                melodyType = melodyMetadata.get(AudioMetadataExtractor.META_CONTENT_TYPE);
+            }
 
             return new MelodyInfo(melodyName, melodyType, melodyFileSize, melodyDuration, ringtone);
         } catch (TikaException | SAXException | IOException e){

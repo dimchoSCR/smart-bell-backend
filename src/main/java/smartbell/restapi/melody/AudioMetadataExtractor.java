@@ -12,6 +12,8 @@ import org.apache.tika.parser.mp4.MP4Parser;
 import org.apache.tika.sax.BodyContentHandler;
 import org.gagravarr.tika.FlacParser;
 import org.gagravarr.tika.VorbisParser;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import javax.sound.sampled.AudioFormat;
@@ -28,6 +30,9 @@ public class AudioMetadataExtractor {
     static final String AUDIO_BASE_CONTENT_TYPE = "audio";
     static final String META_CONTENT_TYPE = "Content-Type";
     static final String OGG_CONTENT_TYPE = "audio/vorbis";
+    static final String UNKNOWN_AUDIO_CONTENT_TYPE = "audio/unknown";
+
+    private final Logger log = LoggerFactory.getLogger(AudioMetadataExtractor.class);
 
     private final AutoDetectParser parser = new AutoDetectParser(
             new AudioParser(),
@@ -66,6 +71,9 @@ public class AudioMetadataExtractor {
             }
 
             return metadata;
+        } catch (Exception e) {
+            log.error("Unknown error while parsing audio meta data!", e);
+            return null;
         }
 
     }
@@ -75,16 +83,19 @@ public class AudioMetadataExtractor {
     }
 
     String tryExtractingDuration(Metadata melodyMetadata, String melodyPath) throws IOException {
-        String duration = melodyMetadata.get(XMPDM.DURATION);
-        if(duration != null) {
-            String audioContentType = melodyMetadata.get(AudioMetadataExtractor.META_CONTENT_TYPE);
-            // For some reason apache tika parses the xmpDMDuration in seconds for ogg and in milliseconds for mp3
-            if(audioContentType.equalsIgnoreCase(OGG_CONTENT_TYPE)) {
-                double durationMillis = Double.parseDouble(duration) * 1000;
-                return String.valueOf(durationMillis);
-            }
 
-            return duration;
+        if (melodyMetadata != null) {
+            String duration = melodyMetadata.get(XMPDM.DURATION);
+            if (duration != null) {
+                String audioContentType = melodyMetadata.get(AudioMetadataExtractor.META_CONTENT_TYPE);
+                // For some reason apache tika parses the xmpDMDuration in seconds for ogg and in milliseconds for mp3
+                if (audioContentType.equalsIgnoreCase(OGG_CONTENT_TYPE)) {
+                    double durationMillis = Double.parseDouble(duration) * 1000;
+                    return String.valueOf(durationMillis);
+                }
+
+                return duration;
+            }
         }
 
         return tryExtractingDurationUsingAudioStream(melodyPath);
