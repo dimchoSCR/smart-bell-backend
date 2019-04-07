@@ -1,6 +1,5 @@
 package smartbell.restapi.melody;
 
-import jdk.internal.org.xml.sax.SAXException;
 import org.apache.tika.exception.TikaException;
 import org.apache.tika.metadata.Metadata;
 import org.apache.tika.mime.MediaType;
@@ -141,7 +140,7 @@ public class MelodyManager {
             }
 
             return new MelodyInfo(melodyName, melodyType, melodyFileSize, melodyDuration, ringtone);
-        } catch (TikaException | SAXException | IOException e){
+        } catch (TikaException | IOException e){
             throw new BellServiceException("Could not get melody info! Extracting metadata failed", e);
         } catch (Exception e) {
             throw new BellServiceException("Could not get melody info!", e);
