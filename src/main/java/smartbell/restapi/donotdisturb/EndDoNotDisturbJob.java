@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import smartbell.restapi.firebase.FirebaseNotificationService;
 import smartbell.restapi.job.Job;
+import smartbell.restapi.status.DoNotDisturbManager;
 
 import java.time.Clock;
 import java.time.LocalDateTime;

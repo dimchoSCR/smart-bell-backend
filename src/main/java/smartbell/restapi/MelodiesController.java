@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import smartbell.restapi.db.ComparisonSigns;
 import smartbell.restapi.db.entities.RingEntry;
-import smartbell.restapi.donotdisturb.DoNotDisturbManager;
+import smartbell.restapi.status.DoNotDisturbManager;
 import smartbell.restapi.log.RingLogManager;
 import smartbell.restapi.melody.MelodyInfo;
 import smartbell.restapi.melody.MelodyManager;

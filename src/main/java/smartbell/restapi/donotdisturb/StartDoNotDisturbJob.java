@@ -5,6 +5,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import smartbell.restapi.job.Job;
+import smartbell.restapi.status.DoNotDisturbManager;
 
 @Component
 public class StartDoNotDisturbJob extends Job {

@@ -1,4 +1,4 @@
-package smartbell.restapi.donotdisturb;
+package smartbell.restapi.status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
@@ -6,11 +6,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import smartbell.restapi.BellExecutorService;
-import smartbell.restapi.status.BellStatus;
+import smartbell.restapi.donotdisturb.EndDoNotDisturbJob;
+import smartbell.restapi.donotdisturb.StartDoNotDisturbJob;
 import smartbell.restapi.job.JobManager;
 import smartbell.restapi.job.JobRequest;
 import smartbell.restapi.melody.MelodyStorageProperties;
-import smartbell.restapi.status.DoNotDisturbStatus;
 
 import javax.annotation.PostConstruct;
 import java.io.File;
