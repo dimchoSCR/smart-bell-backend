@@ -20,13 +20,17 @@ public class KernelInterfacePinManager implements PinManager {
     }
 
     @Override
-    public Pin exportPin(PinNumberSystem pinNumberSystem) throws Exception{
+    public Pin exportPin(PinNumberSystem pinNumberSystem) throws Exception {
         String pinNumber = pinNumberSystem.getBCMPinNumber();
-        pinExporter.export(pinNumber);
+        pinExporter.export(pinNumber); // Set up sysfs if not set up already
 
         Pin pin = new KernelInterfacePin(pinNumber);
-        exportedPins.add(pin);
+        if (exportedPins.contains(pin)) {
+            throw new IllegalStateException("Pin with number: " + pinNumber + "/"
+                    + pinNumberSystem.getWPiPinNumber() + " already exported!");
+        }
 
+        exportedPins.add(pin);
         return pin;
     }
 

@@ -3,7 +3,7 @@ package smartbell.backend.model;
 public abstract class Pin {
     private static final Direction DEFAULT_DIRECTION = Direction.IN;
 
-    protected String pinNumber;
+    protected final String pinNumber;
     protected Direction cachedDirection;
     protected long debounceMillis;
 
@@ -46,5 +46,28 @@ public abstract class Pin {
         Value(String value) {
             this.value = value;
         }
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+
+        if (!Pin.class.isAssignableFrom(obj.getClass())) {
+            return false;
+        }
+
+        Pin pin = (Pin) obj;
+        if (pin.pinNumber == null || pin.pinNumber.isEmpty() || this.pinNumber == null || this.pinNumber.isEmpty()) {
+            throw new IllegalStateException("Pin.pinNumber must be non empty!");
+        }
+
+        return ((Pin) pin).pinNumber == this.pinNumber;
+    }
+
+    @Override
+    public int hashCode() {
+        return Integer.parseInt(this.pinNumber);
     }
 }
