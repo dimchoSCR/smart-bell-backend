@@ -68,7 +68,7 @@ public class KernelInterfaceFileIO {
         }
     }
 
-    public static String readWith(RandomAccessFile reader) throws IOException {
+    public static synchronized String readWith(RandomAccessFile reader) throws IOException {
         try {
             return reader.readLine();
         } catch (IOException e) {
