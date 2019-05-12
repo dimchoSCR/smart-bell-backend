@@ -15,7 +15,7 @@ public class ProcessAudioPlayback implements AudioPlayback {
     public static final String[] DEFAULT_PLAYER_OPTIONS = new String[] {
             "-I", "dummy",
             "-A",  "alsa",
-            "--loop", "--play-and-exit",
+            "--loop",
             "--no-auto-preparse",
             "--no-interact"
     };
@@ -157,6 +157,7 @@ public class ProcessAudioPlayback implements AudioPlayback {
         this.onStop = () -> {};
     }
 
+    @Override
     public void updateAudio(String newAudioFilePath) throws Exception {
         boolean shouldRestart = false;
         if(isPlaying()) {

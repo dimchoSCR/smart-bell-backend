@@ -71,12 +71,12 @@ public class FirebaseNotificationService {
         notifyExecutor.execute(() -> {
             try {
                 List<String> appInstanceTokens = firebaseClientManager.getAllClientTokens();
+                Message.Builder messageBuilder = Message.builder()
+                        .putData(FIREBASE_NOTIFICATION_TYPE, bellMessage.getNotificationType().name())
+                        .putData(KEY_NOTIFICATION_DATA, bellMessage.getData());
+
                 for (String token : appInstanceTokens) {
-                    Message message = Message.builder()
-                            .putData(FIREBASE_NOTIFICATION_TYPE, bellMessage.getNotificationType().name())
-                            .putData(KEY_NOTIFICATION_DATA, bellMessage.getData())
-                            .setToken(token)
-                            .build();
+                    Message message = messageBuilder.setToken(token).build();
 
                     // Handle exception here so resuming the loop is possible
                     // Resumption is needed when FCM renews a token
