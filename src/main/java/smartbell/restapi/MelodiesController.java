@@ -27,6 +27,21 @@ public class MelodiesController {
     @Autowired
     private DoNotDisturbManager doNotDisturbManager;
 
+    @PostMapping("/upload")
+    public void uploadMusicFile(@RequestParam("file") MultipartFile musicFile) {
+        melodyManager.addToMelodieLibrary(musicFile);
+    }
+
+    @PutMapping("/update/ringtone")
+    public String setRingtone(@RequestBody String melodyName) {
+        return melodyManager.setAsRingtone(melodyName);
+    }
+
+    @PutMapping("/delete")
+    public void deleteMelody(@RequestParam("melodyName") String melodyName) {
+        melodyManager.deleteMelody(melodyName);
+    }
+
     @GetMapping
     public List<MelodyInfo> getAllMelodies() {
         return melodyManager.listMelodies();
@@ -36,18 +51,7 @@ public class MelodiesController {
     public List<RingEntry> getFullLog(@QueryParam("compSign") ComparisonSigns compSign,
                                       @QueryParam("timeString") String timeString) {
 
-       return ringLogManager.getAllRingLogEntries(compSign, timeString);
-    }
-
-    @PostMapping("/upload")
-    public void uploadMusicFile(@RequestParam("file") MultipartFile musicFile) {
-        melodyManager.addToMelodieLibrary(musicFile);
-        System.out.println("File uploaded successfully");
-    }
-
-    @PutMapping("/update/ringtone")
-    public String setRingtone(@RequestBody String melodyName) {
-        return melodyManager.setAsRingtone(melodyName);
+        return ringLogManager.getAllRingLogEntries(compSign, timeString);
     }
 
     @GetMapping("/donotdisturb/enable")
@@ -106,11 +110,6 @@ public class MelodiesController {
     @PutMapping("/preplay/end")
     public void endMelodyPrePlay() {
         melodyManager.endMelodyPrePlay();
-    }
-
-    @PutMapping("/delete")
-    public void deleteMelody(@RequestParam("melodyName") String melodyName) {
-        melodyManager.deleteMelody(melodyName);
     }
 
     @InitBinder

@@ -133,8 +133,8 @@ public class MelodyManager {
 
             String melodyType = AudioMetadataExtractor.UNKNOWN_AUDIO_CONTENT_TYPE;
             if (melodyMetadata == null) {
-                audioMetadataExtractor.detectContentType(
-                        new BufferedInputStream(Files.newInputStream(melodyPath)));
+                melodyType = audioMetadataExtractor.detectContentType(
+                        new BufferedInputStream(Files.newInputStream(melodyPath))).getType();
             } else {
                 melodyType = melodyMetadata.get(AudioMetadataExtractor.META_CONTENT_TYPE);
             }
